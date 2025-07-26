@@ -136,11 +136,39 @@ const fetchAdminDailyConsumption = async (req, res) => {
 };
 
 
+const getUserDataByAdminId = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    const data = await adminService.getUserDataByAdminId(adminId, startDate, endDate);
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching user data by adminId:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+
+
+  const getMeterDataByAdminId = async (req, res) => {
+    try {
+      const { adminId } = req.params;
+      const data = await adminService.getMeterDataByAdminId(adminId);
+      return res.json({ success: true, data });
+      } catch (error) {
+        console.error("Error fetching meter data by adminId:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
+      }
+  };
+
 module.exports = {
   addAdminDashboardStats,
   getAdminDashboardStats,
   saveAdminConsumption,
   getAdminUserMeterData,
   getLatestDashboardStat,
-  fetchAdminDailyConsumption
+  fetchAdminDailyConsumption,
+  getUserDataByAdminId,
+  getMeterDataByAdminId
 };

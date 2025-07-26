@@ -73,6 +73,12 @@ const Sidebar = ({ onClose }) => {
       icon: TbReport,
       color: "text-blue-500",
     },
+    {
+      name: "Admin Panel",
+      path: "/admin",
+      icon: FaUserShield,
+      color: "text-violet-500",
+    }
     // {
     //   name: "Energy Consumption",
     //   path: "/energyConsumption",

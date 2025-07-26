@@ -394,9 +394,9 @@ const Chat = () => {
   ];
 
   return (
-    <div className="min-h-screen from-cyan-300 to-white">
+    <div className="min-h-screen  p-bg-blue-200/10">
     <Header/>
-      <div className="min-h-screen p-4 bg-white rounded-lg shadow-md">
+      <div className="min-h-screen  p-4 rounded-lg shadow-md">
         {/* Header */}
         {/* <div className="p-4 max-h-screen bg-cyan-600 text-white rounded-t-lg flex items-center">
           
@@ -423,7 +423,7 @@ const Chat = () => {
         </div>
 
         {/* Deduction List */}
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-4 bg-white rounded-lg shadow-md min-h-screen">
           {activeTab === "recent" &&
             recentDeductions.map((item, index) => (
               <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">

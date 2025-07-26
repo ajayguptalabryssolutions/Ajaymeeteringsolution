@@ -138,20 +138,9 @@ const paymentSchema = new mongoose.Schema(
       },
     },
 
-    verifiedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
     referrerCode: {
       type: String,
       default: null,
-    },
-
-    timestamp: {
-      type: Date,
-      default: Date.now,
     },
   },
   { timestamps: true }

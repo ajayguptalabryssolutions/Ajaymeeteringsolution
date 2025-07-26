@@ -7,7 +7,7 @@ const Meter = require("../model/Meter");
 const MeterDecodedData = require("../model/MeterData");
 const AdminDashboard = require("../model/AdminDashboard");
 const AdminConsumption = require("../model/AdminConsumption");
-// const DailyMeterData = require("../model/DailyMeterData");
+const DailyMeterData = require("../model/DailyMeterSummary");
 const Payment = require("../model/Payment");
 
 ////////////////////////////////////////////////////////
@@ -15,14 +15,14 @@ const Payment = require("../model/Payment");
 //////////////////////////////////////// neeche wala correct hai
 // const addAdminDashboardStats = async () => {
 //   const adminIds = await Meter.distinct("adminId");
-  // const meterIds = await Meter.find({ adminId: { $in: adminIds } }).distinct("_id");
-  // console.log("meterIds for mongo db: =============", meterIds);
+// const meterIds = await Meter.find({ adminId: { $in: adminIds } }).distinct("_id");
+// console.log("meterIds for mongo db: =============", meterIds);
 
-  //   const meterDecodedData = await MeterDecodedData.find({ meterId: { $in: meterIds } });
-  // console.log("Meter Decoded Data: =============", meterDecodedData);
-  // const meterId = await Meter.find({ adminId: { $in: adminIds } }).distinct("meterId");
-  // console.log("meterId for Manually createed: =============", meterId);
-  // console.log("Admin IDs: =============", adminIds);
+//   const meterDecodedData = await MeterDecodedData.find({ meterId: { $in: meterIds } });
+// console.log("Meter Decoded Data: =============", meterDecodedData);
+// const meterId = await Meter.find({ adminId: { $in: adminIds } }).distinct("meterId");
+// console.log("meterId for Manually createed: =============", meterId);
+// console.log("Admin IDs: =============", adminIds);
 
 // const meters = await Meter.find({ adminIds });
 // console.log("Meter count for adminId:", meters.length);
@@ -161,8 +161,6 @@ const Payment = require("../model/Payment");
 
 ////////////////////////////  uper wala correct hai
 
-
-
 // Function to get admin dashboard stats
 // This function retrieves the dashboard stats for a specific admin
 // It aggregates data from various collections and returns the stats
@@ -199,10 +197,17 @@ const addAdminDashboardStat = async () => {
       status: "faulty",
     });
 
+    const totalOfflineMeters = await Meter.countDocuments({
+      adminId,
+      status: "offline",
+    });
+
     // Get meters for this admin
     const meters = await Meter.find({ adminId });
 
     let totalConsumption = 0;
+    let totalEbConsumption = 0;
+    let totalDgConsumption = 0;
 
     for (const meter of meters) {
       // Get only the latest decoded data entry for this meter
@@ -216,12 +221,14 @@ const addAdminDashboardStat = async () => {
         const combined = eb + dg;
 
         totalConsumption += combined;
+        totalEbConsumption += eb;
+        totalDgConsumption += dg;
 
         console.log(
-          `✅ ${meter.meterId} | EB: ${eb} + DG: ${dg} = ${combined} kWh`
+          ` ${meter.meterId} | EB: ${eb} + DG: ${dg} = ${combined} kWh`
         );
       } else {
-        console.log(`⚠️ Meter ${meter.meterId} has no readings`);
+        console.log(` Meter ${meter.meterId} has no readings`);
       }
     }
 
@@ -229,106 +236,69 @@ const addAdminDashboardStat = async () => {
       `🔢 Total Admin Consumption: ${totalConsumption.toFixed(2)} kWh`
     );
 
-    // // Step 1: Calculate total revenue (excluding negative payments)
-    // const revenue = await Payment.aggregate([
-    //   {
-    //     $match: {
-    //       adminId: new mongoose.Types.ObjectId(adminId),
-    //       status: "success",
-    //       amount: { $gte: 0 }, // ✅ Exclude negative payments
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: null,
-    //       totalRevenue: { $sum: "$amount" },
-    //     },
-    //   },
-    // ]);
-
-    // const totalRevenue = revenue[0]?.totalRevenue || 0;
-
-    // // STEP 2: Calculate total negative revenue
-    // const negativeRevenueAgg = await Payment.aggregate([
-    //   {
-    //     $match: {
-    //       adminId: new mongoose.Types.ObjectId(adminId),
-    //       status: "success",
-    //       amount: { $lt: 0 },
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: null,
-    //       negativeRevenue: { $sum: "$amount" }, // This will be negative like -80
-    //     },
-    //   },
-    // ]);
-    // const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
-
     // Step 1: Calculate total revenue (excluding negative payments)
-const revenue = await Payment.aggregate([
-  {
-    $match: {
-      status: "success",
-      amount: { $gte: 0 }, // ✅ Exclude negative
-    },
-  },
-  {
-    $lookup: {
-      from: "meters", // your meters collection name in MongoDB
-      localField: "meterId",
-      foreignField: "_id",
-      as: "meter",
-    },
-  },
-  { $unwind: "$meter" },
-  {
-    $match: {
-      "meter.adminId": new mongoose.Types.ObjectId(adminId),
-    },
-  },
-  {
-    $group: {
-      _id: null,
-      totalRevenue: { $sum: "$amount" },
-    },
-  },
-]);
+    const revenue = await Payment.aggregate([
+      {
+        $match: {
+          status: "success",
+          amount: { $gte: 0 }, // ✅ Exclude negative
+        },
+      },
+      {
+        $lookup: {
+          from: "meters", // your meters collection name in MongoDB
+          localField: "meterId",
+          foreignField: "_id",
+          as: "meter",
+        },
+      },
+      { $unwind: "$meter" },
+      {
+        $match: {
+          "meter.adminId": new mongoose.Types.ObjectId(adminId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$amount" },
+        },
+      },
+    ]);
 
-const totalRevenue = revenue[0]?.totalRevenue || 0;
+    const totalRevenue = revenue[0]?.totalRevenue || 0;
 
-// STEP 2: Calculate total negative revenue
-const negativeRevenueAgg = await Payment.aggregate([
-  {
-    $match: {
-      status: "success",
-      amount: { $lt: 0 }, // Only negatives
-    },
-  },
-  {
-    $lookup: {
-      from: "meters",
-      localField: "meterId",
-      foreignField: "_id",
-      as: "meter",
-    },
-  },
-  { $unwind: "$meter" },
-  {
-    $match: {
-      "meter.adminId": new mongoose.Types.ObjectId(adminId),
-    },
-  },
-  {
-    $group: {
-      _id: null,
-      negativeRevenue: { $sum: "$amount" },
-    },
-  },
-]);
+    // STEP 2: Calculate total negative revenue
+    const negativeRevenueAgg = await Payment.aggregate([
+      {
+        $match: {
+          status: "success",
+          amount: { $lt: 0 }, // Only negatives
+        },
+      },
+      {
+        $lookup: {
+          from: "meters",
+          localField: "meterId",
+          foreignField: "_id",
+          as: "meter",
+        },
+      },
+      { $unwind: "$meter" },
+      {
+        $match: {
+          "meter.adminId": new mongoose.Types.ObjectId(adminId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          negativeRevenue: { $sum: "$amount" },
+        },
+      },
+    ]);
 
-const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
+    const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
 
     console.log(" Total Revenue (excluding negatives):", totalRevenue);
     console.log(" Negative Payments (excluded):", negativeRevenue);
@@ -346,7 +316,11 @@ const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
         meterCount += 1;
 
         console.log(
-          `✅ Meter ${meter.meterId} → Latest Power Factor: ${latest.power_factor.value} ->> Total Power Factor: ${totalPowerFactor.toFixed(2)} -> tiemstamp: ${latest.timestamp.toLocaleDateString()} -> ${latest.timestamp.toLocaleTimeString()}`
+          `✅ Meter ${meter.meterId} → Latest Power Factor: ${
+            latest.power_factor.value
+          } ->> Total Power Factor: ${totalPowerFactor.toFixed(
+            2
+          )} -> tiemstamp: ${latest.timestamp.toLocaleDateString()} -> ${latest.timestamp.toLocaleTimeString()}`
         );
       } else {
         console.log(`⚠️ Meter ${meter.meterId} has no valid power factor`);
@@ -360,6 +334,9 @@ const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
       totalMeters,
       totalActiveMeters,
       totalFaultyMeters,
+      totalOfflineMeters,
+      totalEbConsumption: totalEbConsumption.toFixed(2),
+      totalDgConsumption: totalDgConsumption.toFixed(2),
       totalRevenue: Number(totalRevenue.toFixed(2)),
       negativeRevenue: Number(negativeRevenue.toFixed(2)),
       totalConsumption: Number(totalConsumption.toFixed(2)),
@@ -373,11 +350,263 @@ const negativeRevenue = negativeRevenueAgg[0]?.negativeRevenue || 0;
   return results;
 };
 
-
 //generateAndSaveAdminConsumption is a function that generates and saves admin consumption data
 // It aggregates meter data, calculates daily consumption, and saves it to the AdminConsumption model
 // It ensures that only new entries are saved, avoiding duplicates based on date
 // It returns a response object with success status and data of newly inserted entries
+//correct
+// const generateAndSaveAdminConsumption = async () => {
+//   const adminIds = await Meter.distinct("adminId");
+//   const responseData = [];
+
+//   for (const adminId of adminIds) {
+//     const existingDates = await AdminConsumption.find({ adminId }).distinct(
+//       "date"
+//     );
+//     const existingDateStrings = new Set(
+//       existingDates.map((d) => new Date(d).toISOString().substring(0, 10))
+//     );
+
+//     // ✅ Step 1: Calculate Energy Consumption (already exists)
+//     const result = await MeterDecodedData.aggregate([
+//       {
+//         $lookup: {
+//           from: "meters",
+//           localField: "meterId",
+//           foreignField: "_id",
+//           as: "meter",
+//         },
+//       },
+//       { $unwind: "$meter" },
+//       {
+//         $match: {
+//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
+//         },
+//       },
+//       {
+//         $addFields: {
+//           fullTimestamp: "$timestamp",
+//           date: {
+//             $dateToString: { format: "%Y-%m-%d", date: "$timestamp" },
+//           },
+//           combined_kwh: {
+//             $add: [
+//               { $ifNull: ["$cum_eb_kwh.value", 0] },
+//               { $ifNull: ["$cum_dg_kwh.value", 0] },
+//             ],
+//           },
+//         },
+//       },
+//       { $sort: { timestamp: 1 } },
+//       {
+//         $group: {
+//           _id: {
+//             meterId: "$meterId",
+//             date: "$date",
+//           },
+//           latestCombinedKwh: { $last: "$combined_kwh" },
+//           latestTimestamp: { $last: "$fullTimestamp" },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id.date",
+//           totalAdminConsumption: { $sum: "$latestCombinedKwh" },
+//           latestReadingTime: { $max: "$latestTimestamp" },
+//         },
+//       },
+//       {
+//         $project: {
+//           date: "$_id",
+//           totalAdminConsumption: {
+//             $round: ["$totalAdminConsumption", 2],
+//           },
+//           latestReadingTime: 1,
+//           _id: 0,
+//         },
+//       },
+//       { $sort: { date: 1 } },
+//     ]);
+
+//     const newEntries = result.filter((day) => {
+//       return !existingDateStrings.has(day.date);
+//     });
+
+//     // ✅ Step 2: Get revenue and due balance per month
+//     const meters = await Meter.find({ adminId }).distinct("_id");
+
+//     const revenueData = await Payment.aggregate([
+//       {
+//         $match: {
+//           meterId: { $in: meters },
+//           status: "success",
+//         },
+//       },
+//       {
+//         $addFields: {
+//           month: { $dateToString: { format: "%Y-%m", date: "$timestamp" } },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$month",
+//           totalRevenue: { $sum: "$amount" },
+//         },
+//       },
+//     ]);
+
+//     const dueBalanceData = await Meter.aggregate([
+//       {
+//         $match: { _id: { $in: meters } },
+//       },
+//       {
+//         $addFields: {
+//           month: new Date().toISOString().slice(0, 7), // Current month
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$month",
+//           totalDueBalance: { $sum: "$dueBalance" }, // Make sure this field exists in Meter
+//         },
+//       },
+//     ]);
+
+//     // Convert to Map for fast lookup
+//     const revenueMap = new Map();
+//     revenueData.forEach((r) => revenueMap.set(r._id, r.totalRevenue));
+
+//     const dueMap = new Map();
+//     dueBalanceData.forEach((d) => dueMap.set(d._id, d.totalDueBalance));
+
+//     for (const entry of newEntries) {
+//       const monthKey = entry.date.slice(0, 7); // e.g., "2025-07"
+
+//       const revenue = revenueMap.get(monthKey) || 0;
+//       const due = dueMap.get(monthKey) || 0;
+
+//       await AdminConsumption.create({
+//         adminId,
+//         date: new Date(entry.date),
+//         totalAdminConsumption: entry.totalAdminConsumption,
+//         totalRevenue: Math.round(revenue),
+//         totalDueBalance: Math.round(due),
+//       });
+//     }
+
+//     responseData.push({
+//       adminId,
+//       inserted: newEntries.map((e) => ({
+//         date: e.date,
+//         totalAdminConsumption: e.totalAdminConsumption,
+//         totalRevenue: revenueMap.get(e.date.slice(0, 7)) || 0,
+//         totalDueBalance: dueMap.get(e.date.slice(0, 7)) || 0,
+//       })),
+//     });
+//   }
+
+//   return { success: true, data: responseData };
+// };
+
+// const generateAndSaveAdminConsumption = async () => {
+//   const adminIds = await Meter.distinct("adminId");
+//   const responseData = [];
+
+//   for (const adminId of adminIds) {
+//     // ✅ 1. Get all previously saved dates for this admin
+//     const existingDates = await AdminConsumption.find({ adminId }).distinct("date");
+
+//     const existingDateStrings = new Set(
+//       existingDates.map((d) => new Date(d).toISOString().substring(0, 10))
+//     );
+
+//     // ✅ 2. Aggregate meter-wise latest reading per day (EB + DG)
+//     const result = await MeterDecodedData.aggregate([
+//       {
+//         $lookup: {
+//           from: "meters",
+//           localField: "meterId",
+//           foreignField: "_id",
+//           as: "meter",
+//         },
+//       },
+//       { $unwind: "$meter" },
+//       {
+//         $match: {
+//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
+//         },
+//       },
+//       {
+//         $addFields: {
+//           fullTimestamp: "$timestamp",
+//           date: {
+//             $dateToString: { format: "%Y-%m-%d", date: "$timestamp" },
+//           },
+//           combined_kwh: {
+//             $add: [
+//               { $ifNull: ["$cum_eb_kwh.value", 0] },
+//               { $ifNull: ["$cum_dg_kwh.value", 0] },
+//             ],
+//           },
+//         },
+//       },
+//       { $sort: { timestamp: 1 } },
+//       {
+//         $group: {
+//           _id: {
+//             meterId: "$meterId",
+//             date: "$date",
+//           },
+//           latestCombinedKwh: { $last: "$combined_kwh" },
+//           latestTimestamp: { $last: "$fullTimestamp" },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$_id.date",
+//           totalAdminConsumption: { $sum: "$latestCombinedKwh" },
+//           latestReadingTime: { $max: "$latestTimestamp" },
+//         },
+//       },
+//       {
+//         $project: {
+//           date: "$_id",
+//           totalAdminConsumption: {
+//             $round: ["$totalAdminConsumption", 2],
+//           },
+//           latestReadingTime: 1,
+//           _id: 0,
+//         },
+//       },
+//       { $sort: { date: 1 } },
+//     ]);
+
+//     // ✅ 3. Filter out dates already saved
+//     const newEntries = result.filter((day) => {
+//       return !existingDateStrings.has(day.date);
+//     });
+
+//     // ✅ 4. Save only truly new entries
+//     for (const entry of newEntries) {
+//       await AdminConsumption.create({
+//         adminId,
+//         date: new Date(entry.date), // Store actual date
+//         totalAdminConsumption: entry.totalAdminConsumption,
+//       });
+//     }
+
+//     responseData.push({
+//       adminId,
+//       inserted: newEntries.map((e) => ({
+//         date: e.date,
+//         totalAdminConsumption: e.totalAdminConsumption,
+//       })),
+//     });
+//   }
+
+//   return { success: true, data: responseData };
+// };
+
 //correct
 const generateAndSaveAdminConsumption = async () => {
   const adminIds = await Meter.distinct("adminId");
@@ -480,409 +709,8 @@ const generateAndSaveAdminConsumption = async () => {
 
 
 
-// const generateAndSaveAdminConsumption = async () => {
-//   const adminIds = await Meter.distinct("adminId");
-//   const responseData = [];
 
-//   for (const adminId of adminIds) {
-//     // Step 1: Get last saved date+time (not just date)
-//     const latestSavedEntry = await AdminConsumption.findOne({ adminId })
-//       .sort({ date: -1 })
-//       .lean();
 
-//     const latestSavedDateTime = latestSavedEntry?.date
-//       ? new Date(latestSavedEntry.date)
-//       : null;
-
-//     // Step 2: Aggregate latest EB+DG per meter per date
-//     const result = await MeterDecodedData.aggregate([
-//       {
-//         $lookup: {
-//           from: "meters",
-//           localField: "meterId",
-//           foreignField: "_id",
-//           as: "meter",
-//         },
-//       },
-//       { $unwind: "$meter" },
-//       {
-//         $match: {
-//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
-//         },
-//       },
-//       {
-//         $addFields: {
-//           dateObj: "$timestamp", // exact datetime
-//           date: {
-//             $dateToString: {
-//               format: "%Y-%m-%d",
-//               date: "$timestamp",
-//             },
-//           },
-//           combined_kwh: {
-//             $add: [
-//               { $ifNull: ["$cum_eb_kwh.value", 0] },
-//               { $ifNull: ["$cum_dg_kwh.value", 0] },
-//             ],
-//           },
-//         },
-//       },
-//       { $sort: { timestamp: 1 } },
-//       {
-//         $group: {
-//           _id: {
-//             meterId: "$meterId",
-//             date: "$date",
-//           },
-//           latestTimestamp: { $last: "$dateObj" }, // full timestamp
-//           latestTotal: { $last: "$combined_kwh" },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id.date",
-//           totalAdminConsumption: { $sum: "$latestTotal" },
-//           latestReadingTime: { $max: "$latestTimestamp" },
-//         },
-//       },
-//       {
-//         $project: {
-//           date: "$_id",
-//           totalAdminConsumption: {
-//             $round: ["$totalAdminConsumption", 2],
-//           },
-//           latestReadingTime: 1,
-//           _id: 0,
-//         },
-//       },
-//       { $sort: { date: 1 } },
-//     ]);
-
-//     // Step 3: Filter out already-processed dates & times
-//     const newDays = result.filter((day) => {
-//       const readingDate = new Date(day.latestReadingTime);
-//       return !latestSavedDateTime || readingDate > latestSavedDateTime;
-//     });
-
-//     // Step 4: Save only new ones
-//     for (const day of newDays) {
-//       await AdminConsumption.create({
-//         adminId,
-//         date: day.latestReadingTime,
-//         totalAdminConsumption: day.totalAdminConsumption,
-//       });
-//     }
-
-//     responseData.push({
-//       adminId,
-//       newlyAdded: newDays,
-//     });
-//   }
-
-//   return { data: responseData };
-// };
-
-// const generateAndSaveAdminConsumption = async () => {
-//   const adminIds = await Meter.distinct("adminId");
-
-//   const responseData = [];
-
-//   for (const adminId of adminIds) {
-//     const result = await MeterDecodedData.aggregate([
-//       // Join meter data
-//       {
-//         $lookup: {
-//           from: "meters",
-//           localField: "meterId",
-//           foreignField: "_id",
-//           as: "meter",
-//         },
-//       },
-//       { $unwind: "$meter" },
-
-//       // Filter by admin
-//       {
-//         $match: {
-//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
-//         },
-//       },
-
-//       // Add date and combined_kwh (EB + DG)
-//       {
-//         $addFields: {
-//           date: {
-//             $dateToString: {
-//               format: "%Y-%m-%d",
-//               date: "$timestamp",
-//             },
-//           },
-//           combined_kwh: {
-//             $add: [
-//               { $ifNull: ["$cum_eb_kwh.value", 0] },
-//               { $ifNull: ["$cum_dg_kwh.value", 0] },
-//             ],
-//           },
-//         },
-//       },
-
-//       // Sort by timestamp (so $last gets latest of the day)
-//       { $sort: { timestamp: 1 } },
-
-//       // Get latest (combined_kwh) per meter per day
-//       {
-//         $group: {
-//           _id: {
-//             meterId: "$meterId",
-//             date: "$date",
-//           },
-//           latestTotal: { $last: "$combined_kwh" },
-//         },
-//       },
-
-//       // Now group by date to sum latest values of all meters
-//       {
-//         $group: {
-//           _id: "$_id.date",
-//           totalAdminConsumption: { $sum: "$latestTotal" },
-//         },
-//       },
-
-//       // Format output
-//       {
-//         $project: {
-//           date: "$_id",
-//           totalAdminConsumption: {
-//             $round: ["$totalAdminConsumption", 2],
-//           },
-//           _id: 0,
-//         },
-//       },
-
-//       // Sort by date ascending
-//       { $sort: { date: 1 } },
-//     ]);
-
-//     // Save to DB
-//     for (const day of result) {
-//       await AdminConsumption.findOneAndUpdate(
-//         {
-//           adminId,
-//           date: day.date,
-//         },
-//         {
-//           $set: {
-//             totalAdminConsumption: day.totalAdminConsumption,
-//           },
-//         },
-//         { upsert: true, new: true }
-//       );
-//     }
-
-//     responseData.push({
-//       adminId,
-//       dailyConsumption: result,
-//     });
-//   }
-
-//   return { data: responseData };
-// };
-
-// const generateAndSaveAdminConsumption = async () => {
-//   const adminIds = await Meter.distinct("adminId");
-//   const responseData = [];
-
-//   for (const adminId of adminIds) {
-//     // 1. Find latest saved date for this admin
-//     const latestSavedEntry = await AdminConsumption.findOne({ adminId })
-//       .sort({ date: -1 })
-//       .lean();
-
-//     const latestSavedDate = latestSavedEntry?.date
-//       ? new Date(latestSavedEntry.date)
-//       : null;
-
-//     const result = await MeterDecodedData.aggregate([
-//       {
-//         $lookup: {
-//           from: "meters",
-//           localField: "meterId",
-//           foreignField: "_id",
-//           as: "meter",
-//         },
-//       },
-//       { $unwind: "$meter" },
-//       {
-//         $match: {
-//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
-//         },
-//       },
-//       {
-//         $addFields: {
-//           date: {
-//             $dateToString: {
-//               format: "%Y-%m-%d",
-//               date: "$timestamp",
-//             },
-//           },
-//           combined_kwh: {
-//             $add: [
-//               { $ifNull: ["$cum_eb_kwh.value", 0] },
-//               { $ifNull: ["$cum_dg_kwh.value", 0] },
-//             ],
-//           },
-//         },
-//       },
-//       { $sort: { timestamp: 1 } },
-//       {
-//         $group: {
-//           _id: {
-//             meterId: "$meterId",
-//             date: "$date",
-//           },
-//           latestTotal: { $last: "$combined_kwh" },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id.date",
-//           totalAdminConsumption: { $sum: "$latestTotal" },
-//         },
-//       },
-//       {
-//         $project: {
-//           date: "$_id",
-//           totalAdminConsumption: {
-//             $round: ["$totalAdminConsumption", 2],
-//           },
-//           _id: 0,
-//         },
-//       },
-//       { $sort: { date: 1 } },
-//     ]);
-
-//     const newDays = result.filter((day) => {
-//       const entryDate = new Date(day.date);
-//       return !latestSavedDate || entryDate > latestSavedDate;
-//     });
-
-//     for (const day of newDays) {
-//       await AdminConsumption.create({
-//         adminId,
-//         date: day.date,
-//         totalAdminConsumption: day.totalAdminConsumption,
-//       });
-//     }
-
-//     responseData.push({
-//       adminId,
-//       newlyAdded: newDays,
-//     });
-//   }
-
-//   return { data: responseData };
-// };
-
-// const generateAndSaveAdminConsumption = async () => {
-//   const adminIds = await Meter.distinct("adminId");
-//   const responseData = [];
-
-//   for (const adminId of adminIds) {
-//     // ✅ 1. Get the latest saved entry's full datetime (if exists)
-//     const latestSavedEntry = await AdminConsumption.findOne({ adminId })
-//       .sort({ date: -1 })
-//       .lean();
-
-//     const latestSavedDateTime = latestSavedEntry?.date
-//       ? new Date(latestSavedEntry.date)
-//       : null;
-
-//     // ✅ 2. Aggregate latest reading (EB+DG) for each meter per day
-//     const result = await MeterDecodedData.aggregate([
-//       {
-//         $lookup: {
-//           from: "meters",
-//           localField: "meterId",
-//           foreignField: "_id",
-//           as: "meter",
-//         },
-//       },
-//       { $unwind: "$meter" },
-//       {
-//         $match: {
-//           "meter.adminId": new mongoose.Types.ObjectId(adminId),
-//         },
-//       },
-//       {
-//         $addFields: {
-//           fullTimestamp: "$timestamp", // full datetime
-//           date: {
-//             $dateToString: {
-//               format: "%Y-%m-%d",
-//               date: "$timestamp",
-//             },
-//           },
-//           combined_kwh: {
-//             $add: [
-//               { $ifNull: ["$cum_eb_kwh.value", 0] },
-//               { $ifNull: ["$cum_dg_kwh.value", 0] },
-//             ],
-//           },
-//         },
-//       },
-//       { $sort: { timestamp: 1 } },
-//       {
-//         $group: {
-//           _id: {
-//             meterId: "$meterId",
-//             date: "$date",
-//           },
-//           latestCombinedKwh: { $last: "$combined_kwh" },
-//           latestTimestamp: { $last: "$fullTimestamp" }, // capture last timestamp per meter per day
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: "$_id.date", // date string
-//           totalAdminConsumption: { $sum: "$latestCombinedKwh" },
-//           latestReadingTime: { $max: "$latestTimestamp" }, // capture max timestamp of all meters that day
-//         },
-//       },
-//       {
-//         $project: {
-//           date: "$_id",
-//           totalAdminConsumption: {
-//             $round: ["$totalAdminConsumption", 2],
-//           },
-//           latestReadingTime: 1,
-//           _id: 0,
-//         },
-//       },
-//       { $sort: { latestReadingTime: 1 } },
-//     ]);
-
-//     // ✅ 3. Filter only dates newer than last saved full datetime
-//     const newEntries = result.filter((day) => {
-//       const readingTimestamp = new Date(day.latestReadingTime);
-//       return !latestSavedDateTime || readingTimestamp > latestSavedDateTime;
-//     });
-
-//     // ✅ 4. Save only new entries (no update)
-//     for (const entry of newEntries) {
-//       await AdminConsumption.create({
-//         adminId,
-//         date: entry.latestReadingTime,
-//         totalAdminConsumption: entry.totalAdminConsumption,
-//       });
-//     }
-
-//     responseData.push({
-//       adminId,
-//       inserted: newEntries,
-//     });
-//   }
-
-//   return { success: true, data: responseData };
-// };
 
 const getAllAdminsUserMeterData = async (adminId) => {
   const results = [];
@@ -930,37 +758,522 @@ const getAllAdminsUserMeterData = async (adminId) => {
 const getLatestAdminDashboardStat = async (adminId) => {
   const data = await AdminDashboard.findOneAndUpdate({ adminId })
     .sort({ updatedAt: -1 }) // Sort by newest entry
-    .lean();
+    .lean()
 
   return data;
 };
-
-
-// Get admin consumption by date range
-// This function retrieves admin consumption data for a specific admin within a date range.
-// correct
+///////////////////////////////////
+//getting data for all admins chart
 const getAdminConsumptionByDate = async (adminId, from, to) => {
   if (!mongoose.Types.ObjectId.isValid(adminId)) {
     throw new Error("Invalid adminId");
   }
 
-  const query = {
-    adminId,
-  };
+  const query = { adminId: new mongoose.Types.ObjectId(adminId) };
 
   if (from || to) {
-    query.updatedAt = {}; // <-- Use updatedAt instead of date
+    query.updatedAt = {};
     if (from) query.updatedAt.$gte = new Date(from);
     if (to) query.updatedAt.$lte = new Date(to);
+  } else {
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setDate(toDate.getDate() - 7);
+
+    query.updatedAt = {
+      $gte: fromDate,
+      $lte: toDate,
+    };
   }
 
-  const data = await AdminConsumption.find(query)
-    .sort({ updatedAt: 1 }) // <-- Sort by updatedAt
-    .select("updatedAt totalAdminConsumption -_id"); // <-- Select updatedAt
+  const result = await AdminDashboard.aggregate([
+    { $match: query }, // ✅ THIS IS REQUIRED!
 
-  return data;
+    { $sort: { updatedAt: -1 } },
+
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" } },
+        latestUpdatedAt: { $first: "$updatedAt" },
+        latestTotalUsers: { $first: "$totalUsers" },
+        latestTotalAssignedUsers: { $first: "$totalAssignedUsers" },
+        latestTotalMeters: { $first: "$totalMeters" },
+        latestTotalActiveMeters: { $first: "$totalActiveMeters" },
+        latestTotalFaultyMeters: { $first: "$totalFaultyMeters" },
+        latestTotalRevenue: { $first: "$totalRevenue" },
+        latestNegativeRevenue: { $first: "$negativeRevenue" },
+        latestTotalConsumption: { $first: "$totalConsumption" },
+        latestTotalPowerFactor: { $first: "$totalPowerFactor" },
+        latestTotalOfflineMeters: { $first: "$totalOfflineMeters" },
+        latestTotalEbConsumption: { $first: "$totalEbConsumption" },
+        latestTotalDgConsumption: { $first: "$totalDgConsumption" }
+      }
+    },
+
+    { $sort: { _id: 1 } },
+
+    {
+      $setWindowFields: {
+        sortBy: { _id: 1 },
+        output: {
+          prevTotalUsers: { $shift: { output: "$latestTotalUsers", by: -1 } },
+          prevTotalMeters: { $shift: { output: "$latestTotalMeters", by: -1 } },
+          prevTotalRevenue: { $shift: { output: "$latestTotalRevenue", by: -1 } },
+          prevTotalFaultyMeters: { $shift: { output: "$latestTotalFaultyMeters", by: -1 } },
+          prevTotalOfflineMeters: { $shift: { output: "$latestTotalOfflineMeters", by: -1 } },
+          prevTotalConsumption: { $shift: { output: "$latestTotalConsumption", by: -1 } },
+          prevTotalPowerFactor: { $shift: { output: "$latestTotalPowerFactor", by: -1 } },
+          prevTotalEbConsumption: { $shift: { output: "$latestTotalEbConsumption", by: -1 } },
+          prevTotalDgConsumption: { $shift: { output: "$latestTotalDgConsumption", by: -1 } }
+        }
+      }
+    },
+
+    {
+      $project: {
+        _id: 1,
+        latestUpdatedAt: 1,
+
+        latestTotalUsers: 1,
+        dailyTotalUsers: { $subtract: ["$latestTotalUsers", "$prevTotalUsers"] },
+
+        latestTotalMeters: 1,
+        dailyTotalMeters: { $subtract: ["$latestTotalMeters", "$prevTotalMeters"] },
+
+        latestTotalRevenue: 1,
+        dailyTotalRevenue: { $round: [{ $subtract: ["$latestTotalRevenue", "$prevTotalRevenue"] }, 2] },
+
+        latestTotalFaultyMeters: 1,
+        dailyTotalFaultyMeters: { $subtract: ["$latestTotalFaultyMeters", "$prevTotalFaultyMeters"] },
+
+        latestTotalOfflineMeters: 1,
+        dailyTotalOfflineMeters: { $subtract: ["$latestTotalOfflineMeters", "$prevTotalOfflineMeters"] },
+
+        latestTotalConsumption: 1,
+        dailyTotalConsumption: { $round: [{ $subtract: ["$latestTotalConsumption", "$prevTotalConsumption"] }, 2] },
+
+        latestTotalPowerFactor: 1,
+        dailyTotalPowerFactor: { $round: [{ $subtract: ["$latestTotalPowerFactor", "$prevTotalPowerFactor"] }, 2] },
+
+        latestTotalEbConsumption: 1,
+        dailyTotalEbConsumption: { $round: [{ $subtract: ["$latestTotalEbConsumption", "$prevTotalEbConsumption"] }, 2] },
+
+        latestTotalDgConsumption: 1,
+        dailyTotalDgConsumption: { $round: [{ $subtract: ["$latestTotalDgConsumption", "$prevTotalDgConsumption"] }, 2] }
+      }
+    }
+  ]);
+
+  return result;
 };
 
+// const getAdminConsumptionByDate = async (adminId, from, to) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const query = {
+//     adminId
+//   };
+
+//   if (from || to) {
+//     query.updatedAt = {};
+//     if (from) query.updatedAt.$gte = new Date(from);
+//     if (to) query.updatedAt.$lte = new Date(to);
+//   } else {
+//     // If no from/to given, default to last 7 days
+//     const toDate = new Date();
+//     const fromDate = new Date();
+//     fromDate.setDate(toDate.getDate() - 7);
+
+//     query.updatedAt = {
+//       $gte: fromDate,
+//       $lte: toDate
+//     };
+//   }
+
+//   // const data = await AdminDashboard.find(query)
+//   //   .sort({ updatedAt: 1 })
+//   //   .select("updatedAt totalConsumption -_id");
+
+//   // return data;
+
+//   const result = await AdminDashboard.aggregate([
+
+//     /////////////////////////////////
+
+//     // { $match: query }, // ✅ filter by adminId and date range
+
+//   { $sort: { updatedAt: -1 } },
+
+//   {
+//     $group: {
+//       _id: { $dateToString: { format: "%Y-%m-%d", date: "$updatedAt" } },
+//       latestUpdatedAt: { $first: "$updatedAt" },
+//       latestTotalUsers: { $first: "$totalUsers" },
+//       latestTotalAssignedUsers: { $first: "$totalAssignedUsers" },
+//       latestTotalMeters: { $first: "$totalMeters" },
+//       latestTotalActiveMeters: { $first: "$totalActiveMeters" },
+//       latestTotalFaultyMeters: { $first: "$totalFaultyMeters" },
+//       latestTotalRevenue: { $first: "$totalRevenue" },
+//       latestNegativeRevenue: { $first: "$negativeRevenue" },
+//       latestTotalConsumption: { $first: "$totalConsumption" },
+//       latestTotalPowerFactor: { $first: "$totalPowerFactor" },
+//       latestTotalOfflineMeters: { $first: "$totalOfflineMeters" },
+//       latestTotalEbConsumption: { $first: "$totalEbConsumption" },
+//       latestTotalDgConsumption: { $first: "$totalDgConsumption" }
+//     }
+//   },
+
+//   { $sort: { _id: 1 } },
+
+//   {
+//     $setWindowFields: {
+//       sortBy: { _id: 1 },
+//       output: {
+//         prevTotalUsers: { $shift: { output: "$latestTotalUsers", by: -1 } },
+//         prevTotalMeters: { $shift: { output: "$latestTotalMeters", by: -1 } },
+//         prevTotalRevenue: { $shift: { output: "$latestTotalRevenue", by: -1 } },
+//         prevTotalFaultyMeters: { $shift: { output: "$latestTotalFaultyMeters", by: -1 } },
+//         prevTotalOfflineMeters: { $shift: { output: "$latestTotalOfflineMeters", by: -1 } },
+//         prevTotalConsumption: { $shift: { output: "$latestTotalConsumption", by: -1 } },
+//         prevTotalPowerFactor: { $shift: { output: "$latestTotalPowerFactor", by: -1 } },
+//         prevTotalEbConsumption: { $shift: { output: "$latestTotalEbConsumption", by: -1 } },
+//         prevTotalDgConsumption: { $shift: { output: "$latestTotalDgConsumption", by: -1 } }
+//       }
+//     }
+//   },
+
+//   {
+//     $project: {
+//       _id: 1,
+//       latestUpdatedAt: 1,
+
+//       latestTotalUsers: 1,
+//       dailyTotalUsers: { $subtract: ["$latestTotalUsers", "$prevTotalUsers"] },
+
+//       latestTotalMeters: 1,
+//       dailyTotalMeters: { $subtract: ["$latestTotalMeters", "$prevTotalMeters"] },
+
+//       latestTotalRevenue: 1,
+//       dailyTotalRevenue: { $round: [{ $subtract: ["$latestTotalRevenue", "$prevTotalRevenue"] }, 2] },
+
+//       latestTotalFaultyMeters: 1,
+//       dailyTotalFaultyMeters: { $subtract: ["$latestTotalFaultyMeters", "$prevTotalFaultyMeters"] },
+
+//       latestTotalOfflineMeters: 1,
+//       dailyTotalOfflineMeters: { $subtract: ["$latestTotalOfflineMeters", "$prevTotalOfflineMeters"] },
+
+//       latestTotalConsumption: 1,
+//       dailyTotalConsumption: { $round: [{ $subtract: ["$latestTotalConsumption", "$prevTotalConsumption"] }, 2] },
+
+//       latestTotalPowerFactor: 1,
+//       dailyTotalPowerFactor: { $round: [{ $subtract: ["$latestTotalPowerFactor", "$prevTotalPowerFactor"] }, 2] },
+
+//       latestTotalEbConsumption: 1,
+//       dailyTotalEbConsumption: { $round: [{ $subtract: ["$latestTotalEbConsumption", "$prevTotalEbConsumption"] }, 2] },
+
+//       latestTotalDgConsumption: 1,
+//       dailyTotalDgConsumption: { $round: [{ $subtract: ["$latestTotalDgConsumption", "$prevTotalDgConsumption"] }, 2] }
+//     }
+//   }
+// ]);
+// return result
+// };
+
+// const getAdminConsumptionByDate = async (adminId, from, to) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const toDate = to ? new Date(to) : new Date();
+//   const fromDate = from
+//     ? new Date(from)
+//     : new Date(toDate.getTime() - 30 * 24 * 60 * 60 * 1000); // 30 days default
+
+//   // Common query range
+//   const rangeQuery = {
+//     adminId,
+//     updatedAt: { $gte: fromDate, $lte: toDate },
+//   };
+
+//   // 1. Monthly Total Users and Meters
+//   const usersMeters = await AdminDashboard.find(rangeQuery)
+//     .sort({ updatedAt: 1 })
+//     .select("updatedAt totalUsers totalMeters -_id");
+
+//   // 2. Monthly Meter Health (Faulty, Online, Offline)
+//   const meterHealth = await AdminDashboard.find(rangeQuery)
+//     .sort({ updatedAt: 1 })
+//     .select(
+//       "updatedAt totalFaultyMeters totalActiveMeters totalOfflineMeters -_id"
+//     );
+
+//   // 3. Monthly Due Balance
+//   const dueBalance = await AdminConsumption.find(rangeQuery)
+//     .sort({ updatedAt: 1 })
+//     .select("updatedAt totalDueBalance -_id");
+
+//   // 4. 7-Day Consumption
+//   const to7 = new Date();
+//   const from7 = new Date();
+//   from7.setDate(to7.getDate() - 7);
+
+//   const consumption = await AdminConsumption.find({
+//     adminId,
+//     updatedAt: { $gte: from7, $lte: to7 },
+//   })
+//     .sort({ updatedAt: 1 })
+//     .select("updatedAt totalAdminConsumption -_id");
+
+//   return {
+//     usersMeters,
+//     meterHealth,
+//     dueBalance,
+//     consumption,
+//   };
+// };
+
+// const getUserDataByAdminId = async (adminId, startDate, endDate) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const users = await User.find({ adminId, role: "user" })
+//     .select("_id name email phoneNumber createdAt updatedAt");
+//   const userDataWithMeters = await Promise.all(
+//     users.map(async (user) => {
+//       const meters = await Meter.find({ assignedUserId: user._id }).select("_id meterName");
+
+//       const meterData = await Promise.all(
+//         meters.map(async (meter) => {
+//           const query = { meterId: meter._id.toString() };
+
+//           // ✅ If date filter is passed
+//           if (startDate || endDate) {
+//             query.date = {};
+//             if (startDate) query.date.$gte = new Date(startDate);
+//             if (endDate) query.date.$lte = new Date(endDate);
+//           } else {
+//             // Default: Latest 7 days
+//             const latest7Days = await DailyMeterData.find({ meterId: meter._id.toString() })
+//               .sort({ date: -1 })
+//               .limit(7)
+//               .select("date");
+
+//             const latestDates = latest7Days.map((entry) => entry.date);
+//             query.date = { $in: latestDates };
+//           }
+
+//           const dailyData = await DailyMeterData.find(query)
+//             .sort({ date: 1 }) // sort ascending for charts/tables
+//             .select("totalKWh totalDeduction totalEG totalDG date -_id");
+
+//           return {
+//             meterId: meter._id,
+//             meterName: meter.meterName,
+//             dailyData
+//           };
+//         })
+//       );
+
+//       return {
+//         userId: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phoneNumber: user.phoneNumber,
+//         createdAt: user.createdAt,
+//         updatedAt: user.updatedAt,
+//         meters: meterData
+//       };
+//     })
+//   );
+
+//   return userDataWithMeters;
+// };
+
+// const getUserDataByAdminId = async (adminId) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const users = await User.find({ adminId, role: "user" })
+//     .select("_id name email phoneNumber createdAt updatedAt");
+
+//   const userDataWithMeters = await Promise.all(
+//     users.map(async (user) => {
+//       const meters = await Meter.find({ assignedUserId: user._id }).select("_id meterName");
+
+//       const meterData = await Promise.all(
+//         meters.map(async (meter) => {
+//           // ✅ Fetch ALL daily meter data (no date filter)
+//           const dailyData = await DailyMeterData.find({ meterId: meter._id.toString() })
+//             .sort({ date: 1 }) // oldest to newest
+//             .select("totalKWh totalDeduction totalEG totalDG date -_id");
+
+//           return {
+//             meterId: meter._id,
+//             meterName: meter.meterName,
+//             dailyData
+//           };
+//         })
+//       );
+
+//       return {
+//         userId: user._id,
+//         name: user.name,
+//         email: user.email,
+//         phoneNumber: user.phoneNumber,
+//         createdAt: user.createdAt,
+//         updatedAt: user.updatedAt,
+//         meters: meterData
+//       };
+//     })
+//   );
+
+//   return userDataWithMeters;
+// };
+
+const getUserDataByAdminId = async (adminId, startDate, endDate) => {
+  if (!mongoose.Types.ObjectId.isValid(adminId)) {
+    throw new Error("Invalid adminId");
+  }
+
+  const users = await User.find({ adminId, role: "user" }).select(
+    "_id name email phoneNumber createdAt updatedAt"
+  );
+
+  console.log("====users=====", users);
+
+  const userDataWithMeters = await Promise.all(
+    users.map(async (user) => {
+      const meters = await Meter.find({
+        adminId: adminId,
+        assingnedUserId: user._id,
+        isAssigned: true,
+      });
+
+      //       const assignedMeters = await Meter.find({
+      //   adminId: adminId,
+      //   assingnedUserId: user._id ,
+      //       isAssigned: true,   // not "assignedUserId"
+      // });
+      console.log("====meters=====", meters);
+
+      const meterData = await Promise.all(
+        meters.map(async (meter) => {
+          const query = { meterId:new mongoose.Types.ObjectId(meter._id) };
+
+          // ✅ If date filter is passed
+          if (startDate || endDate) {
+            query.date = {};
+            if (startDate) query.date.$gte = new Date(startDate);
+            if (endDate) query.date.$lte = new Date(endDate);
+          } else {
+            // ✅ Default: Latest 7 days
+            const latest7Days = await DailyMeterData.find({
+               meterId: new mongoose.Types.ObjectId(meter._id),
+            })
+              .sort({ date: -1 })
+              .limit(7)
+              .select("date");
+            console.log("=====dailyData1======", latest7Days);
+
+            const latestDates = latest7Days.map((entry) => entry.date);
+            query.date = { $in: latestDates };
+          }
+
+          const dailyData = await DailyMeterData.find(query)
+            .sort({ date: 1 }) // sort ascending for charts/tables
+            .select("totalKWh totalDeduction totalEG totalDG date -_id");
+          console.log("=====dailyData1======", dailyData);
+          return {
+            // meterId: meter._id,
+            // meterName: meter.meterName,
+            meter,
+            dailyData,
+          };
+        })
+      );
+
+      return {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        meters: meterData,
+      };
+    })
+  );
+
+  return userDataWithMeters;
+};
+
+const getMeterDataByAdminId = async (adminId) => {
+  if (!mongoose.Types.ObjectId.isValid(adminId)) {
+    throw new Error("Invalid adminId");
+  }
+  const meterData = await Meter.find({ adminId });
+
+  console.log("Meter Data for Admin:", meterData);
+  return meterData;
+};
+
+// const getAdminConsumptionByDate = async (adminId, from, to) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const query = { adminId };
+
+//   // Handle date range
+//   let fromDate = from ? new Date(from) : null;
+//   let toDate = to ? new Date(to) : null;
+
+//   // Default to last 7 days if no filter is provided
+//   if (!fromDate && !toDate) {
+//     toDate = new Date(); // now
+//     fromDate = new Date();
+//     fromDate.setDate(toDate.getDate() - 7); // 7 days ago
+//   }
+
+//   // Only set `updatedAt` if either date is defined
+//   if (fromDate || toDate) {
+//     query.updatedAt = {};
+//     if (fromDate) query.updatedAt.$gte = fromDate;
+//     if (toDate) query.updatedAt.$lte = toDate;
+//   }
+
+//   const data = await AdminConsumption.find(query)
+//     .sort({ updatedAt: 1 }) // ascending
+//     .select("updatedAt totalAdminConsumption -_id");
+
+//   return data;
+// };
+
+// const getAdminConsumptionByDate = async (adminId, from, to) => {
+//   if (!mongoose.Types.ObjectId.isValid(adminId)) {
+//     throw new Error("Invalid adminId");
+//   }
+
+//   const query = {
+//     adminId,
+//   };
+
+//   if (from || to) {
+//     query.updatedAt = {}; // <-- Use updatedAt instead of date
+//     if (from) query.updatedAt.$gte = new Date(from);
+//     if (to) query.updatedAt.$lte = new Date(to);
+//   }
+
+//   const data = await AdminConsumption.find(query)
+//     .sort({ updatedAt: 1 }) // <-- Sort by updatedAt
+//     .select("updatedAt totalAdminConsumption -_id"); // <-- Select updatedAt
+
+//   return data;
+// };
 
 module.exports = {
   addAdminDashboardStat,
@@ -968,4 +1281,6 @@ module.exports = {
   getAllAdminsUserMeterData,
   getLatestAdminDashboardStat,
   getAdminConsumptionByDate,
+  getUserDataByAdminId,
+  getMeterDataByAdminId,
 };

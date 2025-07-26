@@ -5,7 +5,7 @@ import currentPowerChartReducer  from '../slice/currentPowerChartSlice'
 import meterReducer from '../slice/meterSlice'
 import commandSlice from '../slice/commandSlice'
 import userSlice from '../slice/userSlice'
-
+import adminDashboardDataReducer from "../slice/adminDashboardDataSlice";
 
 const rootReducer = combineReducers({
   header: headerReducer, // Correct structure
@@ -13,6 +13,7 @@ const rootReducer = combineReducers({
   meters : meterReducer,
   commands : commandSlice,
   users: userSlice,
+   adminDashboardData: adminDashboardDataReducer
 });
 
 export default rootReducer;

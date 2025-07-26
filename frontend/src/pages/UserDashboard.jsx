@@ -498,7 +498,7 @@
 //         © 2025 Smart Meter Dashboard. All rights reserved.
 //       </footer> */}
 //     </div>
-//   ); 
+//   );
 // }
 
 // const Card = ({ title, value, icon, subText, content }) => (
@@ -524,7 +524,17 @@ import { selectChartsByDashboard } from "../redux/slice/currentPowerChartSlice";
 import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
 import Header from "../components/header/Header";
 import CurrentPowerChart from "../components/meterManagement/CurrentPowerChart";
-import { Zap, History, Settings, Bolt, Lock, TrendingUp, Calendar, ArrowRight, CreditCard } from "lucide-react";
+import {
+  Zap,
+  History,
+  Settings,
+  Bolt,
+  Lock,
+  TrendingUp,
+  Calendar,
+  ArrowRight,
+  CreditCard,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 // Note: Link component would be imported from your routing library
 
@@ -571,8 +581,12 @@ function UserDashboard() {
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="mb-8">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">Welcome Back!</h1>
-          <p className="text-sm sm:text-base text-gray-600">Monitor your energy consumption and manage your account</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
+            Welcome Back!
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Monitor your energy consumption and manage your account
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -630,15 +644,17 @@ function UserDashboard() {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Actions
+          </h2>
           <div className="flex flex-wrap gap-4">
-          <Link to="/userdashboard/rechargehistory">
-            <ActionButton
-              icon={<CreditCard className="h-5 w-5" />}
-              label="Top Up"
-              variant="secondary"
-              rightIcon={<ArrowRight className="h-4 w-4 cursor-pointer" />}
-            />
+            <Link to="/userdashboard/rechargehistory">
+              <ActionButton
+                icon={<CreditCard className="h-5 w-5" />}
+                label="Top Up"
+                variant="secondary"
+                rightIcon={<ArrowRight className="h-4 w-4 cursor-pointer" />}
+              />
             </Link>
             {/* <a href="/userdashboard/recenthistoricaldata" className="inline-block">
               <ActionButton
@@ -648,18 +664,16 @@ function UserDashboard() {
                 variant="secondary"
               />
             </a> */}
-           <Link to="/userdashboard/recentHistoricalData">
-           <div  className="cursor-pointer">
-  <ActionButton
-    icon={<History className="h-5 w-5" />}
-    label="Usage History"
-    rightIcon={<ArrowRight className="h-4 w-4 cursor-pointer" />}
-    variant="secondary"
-   
-  />
-  </div>
-</Link>
-
+            <Link to="/userdashboard/recentHistoricalData">
+              <div className="cursor-pointer">
+                <ActionButton
+                  icon={<History className="h-5 w-5" />}
+                  label="Usage History"
+                  rightIcon={<ArrowRight className="h-4 w-4 cursor-pointer" />}
+                  variant="secondary"
+                />
+              </div>
+            </Link>
 
             <ActionButton
               icon={<Settings className="h-5 w-5" />}
@@ -679,8 +693,12 @@ function UserDashboard() {
           <div className="p-6">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Usage Trends</h2>
-                <p className="text-gray-600">Track your energy consumption patterns over time</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  Usage Trends
+                </h2>
+                <p className="text-gray-600">
+                  Track your energy consumption patterns over time
+                </p>
               </div>
               <div className="flex items-center space-x-4">
                 <div>
@@ -698,16 +716,11 @@ function UserDashboard() {
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-6">
               {charts.map((chart) => {
                 const filteredChart = filterChart(chart);
-                return (
-                  <CurrentPowerChart
-                    key={chart.id}
-                    {...filteredChart}
-                  />
-                );
+                return <CurrentPowerChart key={chart.id} {...filteredChart} />;
               })}
             </div>
           </div>
@@ -717,7 +730,16 @@ function UserDashboard() {
   );
 }
 
-const StatsCard = ({ title, value, icon, subText, content, trend, bgColor, iconColor }) => (
+const StatsCard = ({
+  title,
+  value,
+  icon,
+  subText,
+  content,
+  trend,
+  bgColor,
+  iconColor,
+}) => (
   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
     <div className="flex items-center justify-between mb-4">
       <div className={`p-3 rounded-lg ${bgColor}`}>
@@ -730,7 +752,7 @@ const StatsCard = ({ title, value, icon, subText, content, trend, bgColor, iconC
         </div>
       )}
     </div>
-    
+
     <div className="mb-2">
       <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
       {content ? (
@@ -739,24 +761,36 @@ const StatsCard = ({ title, value, icon, subText, content, trend, bgColor, iconC
         <div className="text-2xl font-bold text-gray-900">{value}</div>
       )}
     </div>
-    
+
     {subText && (
-      <p className={`text-sm ${
-        trend === "up" ? "text-green-600" : 
-        trend === "down" ? "text-red-600" : 
-        "text-gray-500"
-      }`}>
+      <p
+        className={`text-sm ${
+          trend === "up"
+            ? "text-green-600"
+            : trend === "down"
+            ? "text-red-600"
+            : "text-gray-500"
+        }`}
+      >
         {subText}
       </p>
     )}
   </div>
 );
 
-const ActionButton = ({ icon, label, rightIcon, variant = "secondary", onClick }) => {
-  const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors";
+const ActionButton = ({
+  icon,
+  label,
+  rightIcon,
+  variant = "secondary",
+  onClick,
+}) => {
+  const baseClasses =
+    "flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors";
   const variantClasses = {
     // primary: "bg-blue-600 hover:bg-blue-700 text-white",
-    secondary: "bg-gray-100 hover:bg-gray-200 text-gray-700 border cursor-pointer border-gray-300"
+    secondary:
+      "bg-gray-100 hover:bg-gray-200 text-gray-700 border cursor-pointer border-gray-300",
   };
 
   return (

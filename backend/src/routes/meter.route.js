@@ -13,5 +13,8 @@ router.post('/create', meterController.addMeter);
 router.post('/assign-meter',meterController.assignMeter);
 router.put('/update/:id', meterController.updateMeter);
 router.delete('/delete/:id', meterController.deleteMeter);
+router.get('/admin-meters/:adminId', meterController.getMetersByAdminId);
+router.get('/by-meterId/:meterId', meterController.getMeterByMeterId);
+router.get('/getallmeterbysummarydata', meterController.getAllMeterWithSummaryData)
 
 module.exports = router;

@@ -14,4 +14,8 @@ router.get("/recent-data/:adminId", adminController.getLatestDashboardStat);
 //complete
 router.get("/get-admin-daily-consumption/:adminId", adminController.fetchAdminDailyConsumption);
 
+router.get("/get-userdata-by-admin/:adminId", adminController.getUserDataByAdminId);
+
+router.get("/get-meter-by-admin/:adminId", adminController.getMeterDataByAdminId);
+
 module.exports = router;

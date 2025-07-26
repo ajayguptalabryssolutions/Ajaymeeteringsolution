@@ -38,7 +38,31 @@ const adminConsumptionSchema = new mongoose.Schema({
   totalAdminConsumption: {
     type: Number,
     required: true
-  }
+  },
+  totalRevenue:{
+    type:Number,
+    require:true
+  },
+  totalDueBalance:{
+    type:Number,
+    require:true
+  },
+  totalMeters:{
+    type:Number,
+    require:true
+  },
+  totalActiveMeters:{
+    type:Number,
+    require:true
+  },
+  totalOfflineMeters:{
+    type:Number,
+    require:true
+  },
+  totalFaultyMeters:{
+    type:Number,
+    require:true
+  },
 }, { timestamps: true });
 
 // adminConsumptionSchema.index({ adminId: 1, date: 1 }, { unique: true }); 
