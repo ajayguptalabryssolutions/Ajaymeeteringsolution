@@ -1,8 +1,5 @@
 const Meter = require('../model/Meter');
 const User = require('../model/User');
-const Payment = require("../model/Payment");
-const DailyMeterData = require("../model/DailyMeterSummary");
-const mongoose = require('mongoose'); // ensure this is imported
 
 const { meterValidator } = require('../validator/meterValidator');
 const generateDevEUI = require('../helper/generateDevEUI');
@@ -10,8 +7,8 @@ const generateDevEUI = require('../helper/generateDevEUI');
 const addMeter = async (req, res) => {
     try {
         // Validate the incoming data
-        const { type, name, meterSerialNumber, slaveId, status, adminId } = req.body;
-        console.log("Received data for new meter:", type, name, meterSerialNumber, slaveId, status, adminId);
+        const { type, name, meterSerialNumber, slaveId, status, adminId,deviceId } = req.body;
+        console.log("Received data for new meter:", {type, name, meterSerialNumber, slaveId, status, adminId,deviceId});
 
         if (!name || !meterSerialNumber || !slaveId || !adminId) {
             return res.status(400).json({ error: "All fields are required." });
@@ -38,7 +35,7 @@ const addMeter = async (req, res) => {
         //check if the userId exists or not
         const adminExists = await User.findById(validatedMeterData.adminId);
         if (!adminExists) {
-            return res.status(404).json({ error: "User not found." });
+            return res.status(404).json({ error: "admin not found." });
         }
 
         // Create a new meter instance
@@ -52,6 +49,7 @@ const addMeter = async (req, res) => {
             status: validatedMeterData.status || "offline",
             lastSeen: validatedMeterData.lastSeen || new Date(),
             adminId: validatedMeterData.adminId,
+            deviceId:validatedMeterData.deviceId,
         });
 
         // Save the new meter to the database
@@ -68,7 +66,7 @@ const assignMeter = async (req, res) => {
     const { userId, meterId } = req.body;
 
     // Check if the meter exists
-    const meter = await Meter.findOne({ meterId });
+    const meter = await Meter.findOne({ deviceId:meterId });
 
     if (!meter) {
       return res.status(404).json({ message: "Meter not found" });
@@ -79,7 +77,10 @@ const assignMeter = async (req, res) => {
       return res.status(400).json({ message: "Meter is already assigned" });
     }
 
-    meter.userId = userId;
+    meter.assingnedUserId = userId;
+    meter.userAssignedTimestamp = new Date();
+    console.log("meter data",meter);
+   
     meter.isAssigned = true;
 
     await meter.save();
@@ -177,161 +178,79 @@ const getMeterById = async (req, res) => {
     }
 };
 
-
-
-
-const getMetersByAdminId = async (req, res) => {
-  const { adminId } = req.params;
-  console.log("----",req.params)
-
-  if (!adminId) {
-    return res.status(400).json({ error: "adminId is required in params." });
-  }
-
-  // Optional: Uncomment only if adminId is stored as ObjectId
-  if (!mongoose.Types.ObjectId.isValid(adminId)) {
-    return res.status(400).json({ error: "Invalid adminId format." });
-  }
-
-  try {
-    const meters = await Meter.find({ adminId }).populate('assingnedUserId',"_id name email");
-
-    if (meters.length === 0) {
-      return res.status(404).json({ message: "No meters found for this admin." });
-    }
-
-    return res.status(200).json({ data: meters });
-  } catch (error) {
-    console.error("Error fetching meters:", error);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-
-// const getAllMeterWithSummaryData = async (req, res) => {
-//   try {
-//     // Step 1: Get all meters, populate user name from assingnedUserId
-//     const meters = await Meter.find()
-//       .populate("assingnedUserId", "name")
-//       .sort({ createdAt: -1 });
-
-//       console.log("meters data is : ------------ ", meters)
-//     // Step 2: For each meter, get latest payment and format result
-//     const result = await Promise.all(
-//       meters.map(async (meter) => {
-//         const latestPayment = await Payment.findOne({ meterId: meter._id })
-//           .sort({ createdAt: -1 });
-
-//         return {
-//           meterId: meter.meterId,
-//           meterName: meter.name,
-//           userName: meter.assingnedUserId?.name || "Unassigned",
-//           balance: latestPayment?.amount ?? 0,
-//           lastRecharge: latestPayment?.createdAt ?? null,
-//           status: meter.status,
-//         };
-//       })
-//     );
-
-//     res.status(200).json({ success: true, data: result });
-//   } catch (error) {
-//     console.error("Error fetching meter summary:", error);
-//     res.status(500).json({ success: false, message: "Server Error" });
-//   }
-// };
-
-
-
-const getAllMeterWithSummaryData = async (req, res) => {
-  try {
-    const meters = await Meter.find()
-      .populate("assingnedUserId", "name email") // only name & email from user
-      .lean(); // convert to plain objects
-
-    const meterIds = meters.map(m => m._id);
-
-    // Get latest decoded data for each meter
-    const latestData = await MeterDecodedData.aggregate([
-      { $match: { meterId: { $in: meterIds } } },
-      { $sort: { timestamp: -1 } },
-      {
-        $group: {
-          _id: "$meterId",
-          balance: { $first: "$balance_amount.value" },
-          timestamp: { $first: "$timestamp" }
-        }
-      }
-    ]);
-
-    const balanceMap = {};
-    latestData.forEach(data => {
-      balanceMap[data._id.toString()] = data.balance;
-    });
-
-    const result = meters.map(meter => {
-      const meterIdStr = meter._id.toString();
-      return {
-        _id: meter._id,
-        meterId: meter.meterId,
-        name: meter.name,
-        type: meter.type,
-        status: meter.status,
-        assignedUser: meter.assingnedUserId || null,
-        balance: balanceMap[meterIdStr] || 0
-      };
-    });
-
-    res.status(200).json({ success: true, data: result });
-  } catch (error) {
-    console.error("Error fetching all meters with summary:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-
-
-// const getMeterByMeterId = async (req, res) => {
-//   try {
-//     const { meterId } = req.params;
-
-//     // ✅ Correctly find meter by meterId string (not _id)
-//     const meter = await Meter.findOne({ meterId });
-
-//     if (!meter) {
-//       return res.status(404).json({ message: "Meter not found" });
-//     }
-
-//     // ✅ Use meter._id (ObjectId) to fetch daily data
-//     const dailyData = await DailyMeterData.find({ meterId: meter._id });
-
-//     res.json(dailyData);
-//   } catch (error) {
-//     console.error("Error fetching meter data by meterId:", error);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };
-
-// Get meter summary data using meterId string (e.g., "M-03000000000F3DDD")
-const getMeterByMeterId =  async (req, res) => {
+const getMeterByMeterId = async (req, res) => {
   try {
     const { meterId } = req.params;
+    const { startTime, endTime } = req.query;
 
-    // Step 1: Find the meter with this meterId string
+    // Step 1: Find the meter by meterId string
     const meter = await Meter.findOne({ meterId });
 
     if (!meter) {
       return res.status(404).json({ message: "Meter not found" });
     }
 
-    // Step 2: Find all summaries that reference this meter's _id
-    const summaries = await DailyMeterData.find({ meterId: meter._id }).sort({ date: -1 });
+    // Step 2: Build date filter (on "date" field)
+    const dateFilter = {};
+    if (startTime) dateFilter.$gte = new Date(startTime);
+    if (endTime) {
+      const end = new Date(endTime);
+      end.setHours(23, 59, 59, 999); // Include full end day
+      dateFilter.$lte = end;
+    }
+
+    const query = {
+      meterId: meter._id,
+      ...(startTime || endTime ? { date: dateFilter } : {})
+    };
+
+    // Step 3: Find summaries with optional date filtering
+    const summaries = await DailyMeterData.find(query).sort({ date: -1 });
 
     res.status(200).json(summaries);
   } catch (error) {
     console.error("Error fetching meter summary data:", error);
     res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 
-module.exports = {getAllMeters,getMeterById,updateMeter,addMeter,assignMeter,deleteMeter, getMetersByAdminId, getMeterByMeterId,getAllMeterWithSummaryData }
+const getAllMetersWithPaymentData = async (req, res) => {
+  try {
+    // Fetch all meters
+    const meters = await Meter.find().populate('assingnedUserId', 'name email');
+
+    if (meters.length === 0) {
+      return res.status(404).json({ message: "No meters found." });
+    }
+
+    // For each meter, get the latest decoded data (by createdAt descending)
+    const metersWithBalance = await Promise.all(
+      meters.map(async (meter) => {
+        const latestReading = await MeterDecodedData.findOne({ meterId: meter._id })
+          .sort({ createdAt: -1 });
+
+        const balance = latestReading?.balance_amount?.value ?? null;
+
+         const latestPayment = await Payment.findOne({
+          meterId: meter._id,
+          status: "success",
+        })
+          .sort({ createdAt: -1 });
+
+        return {
+          ...meter.toObject(),
+          balanceAmount: balance,
+          latestPayment:latestPayment
+        };
+      })
+    );
+
+    return res.status(200).json({ data: metersWithBalance });
+  } catch (error) {
+    console.error("Error fetching meters:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+module.exports = {getAllMeters,getMeterById,updateMeter,addMeter,assignMeter,deleteMeter,getAllMetersWithPaymentData,getMeterByMeterId}

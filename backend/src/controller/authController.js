@@ -1,10 +1,11 @@
-const { generateAccessToken,generateRefreshToken } = require('../helper/tokenGeneration')
 const User = require('../model/User');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
+const { generateAccessToken,generateRefreshToken } = require('../helper/tokenGeneration')
+const {generatePassword,loginLogicHepler} = require('../helper/authhelper')
+
 //validation
 const{userSchema} = require('../validator/userValidator');
-const { Transaction } = require('mongodb');
 const sendOtpSMS = require('../utils/sendOTPsms');
 const { date } = require('zod');
 
@@ -112,10 +113,8 @@ const login = async (req, res) => {
     }
     return res.status(loginResponse.status).json({
       message: loginResponse.message,
-      userData: loginResponse.userData,
+      data:loginResponse.user
     });
-
-
 
   } catch (error) {
     console.error("Error during user login:", error);
@@ -124,7 +123,7 @@ const login = async (req, res) => {
 }
 const logout = async (req, res) => {
   try {
-
+    
 
     // Return a success response
     return res.status(200).json({ message: "Logout successful" });
@@ -174,27 +173,13 @@ const otpVerification = async (req, res) => {
   }
 };
 
-const loginLogicHepler = async (user, password) => {
-  // Compare the password with the hashed password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return { status: 401, message: "Invalid password" };
+const forgotPassword = async(req,res)=>{
+  try{
+
   }
-
-  // Generate JWT token
-  const refershToken = generateRefreshToken(user);
-  const token = user.generateAuthToken(user);
-
-  //save the refresh token in the db.
-  user.refershToken = refershToken;
-
-  await user.save();
-  user.token = token;
-
-  return { status: 200, message: "Login successful", userData: user };
+  catch(error){
+    
+  }
 }
-function generatePassword(length) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-}
-module.exports = { smartlynkRegistration, register, logout, login,otpVerification }
+
+module.exports = { smartlynkRegistration, register, logout, login,otpVerification,forgotPassword }

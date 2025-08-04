@@ -10,4 +10,4 @@ const DailyMeterSummarySchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model("DailyMeterData", DailyMeterSummarySchema);
+module.exports = mongoose.model("DailyMeterData",DailyMeterSummarySchema);

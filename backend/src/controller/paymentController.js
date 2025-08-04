@@ -1,101 +1,11 @@
-const paymentService = require("../service/paymentService");
-const mongoose = require("mongoose");
-const createPayment = async (req, res) => {
-  try {
-    const paymentData = req.body;
-
-    // // Optional error simulation (for failed status handling)
-    // const error = paymentData.status === "failed" ? paymentData.errorInfo : null;
-
-    const payment = await paymentService.createPayment(paymentData);
-
-    return res.status(201).json({
-      success: true,
-      message: "Payment recorded",
-      data: payment
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create payment",
-      error: err.message
-    });
-  }
-};
-
-
-// const getPaymentHistory = async (req, res) => {
-//   try {
-//     const {meterId}  = req.params; // You can change to req.params if using /:meterId
-
-//     if (!mongoose.Types.ObjectId.isValid(meterId)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "meterId is required"
-//       });
-//     }
-
-//     const paymentHistory = await paymentService.getPaymentHistory(meterId);
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Payment history retrieved successfully",
-//       data: paymentHistory
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to retrieve payment history",
-//       error: err.message
-//     });
-//   }
-// };
-
-const getPaymentHistory = async (req, res) => {
-  try {
-    const { meterId } = req.params;
-    const { startTime, endTime, search, page = 1, limit = 10 } = req.query;
-
-    if (!mongoose.Types.ObjectId.isValid(meterId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid meterId",
-      });
-    }
-
-    const paginationOptions = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-    };
-
-    const paymentHistory = await paymentService.getPaymentHistory({
-      meterId,
-      startTime,
-      endTime,
-      search,
-      paginationOptions,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Payment history retrieved successfully",
-      data: paymentHistory,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve payment history",
-      error: err.message,
-    });
-  }
-};
-
+const paymentService = require('../service/paymentService');
 
 const getPaymentsForMeterId = async (req, res) => {
   try {
     const { meterId } = req.params;
+    const { startTime, endTime } = req.query;
 
-    const payments = await paymentService.getPaymentsByMeterId(meterId);
+    const payments = await paymentService.getPaymentsByMeterId(meterId, startTime, endTime);
 
     res.status(200).json(payments);
   } catch (error) {
@@ -106,5 +16,15 @@ const getPaymentsForMeterId = async (req, res) => {
   }
 };
 
+const getNegativePayments =  async (req, res) => {
+  const { adminId } = req.params;
 
-module.exports = {createPayment, getPaymentHistory, getPaymentsForMeterId};
+  try {
+    const data = await paymentService.getNegativePaymentsByAdminId(adminId);
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+module.exports = {getPaymentsForMeterId, getNegativePayments}

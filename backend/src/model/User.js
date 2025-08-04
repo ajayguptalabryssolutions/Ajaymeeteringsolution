@@ -1,43 +1,101 @@
 const mongoose = require("mongoose");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
+
+const actionSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: false,
+  },
+  userName: {
+    type: String,
+    required: false,
+  },
+  actionType: {
+    type: String,
+    required: true,
+  },
+  details: {
+    type: mongoose.Schema.Types.Mixed,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+  status: {
+    type: String,
+    enum: ["pending", "completed", "failed"],
+    required: false,
+  },
+  performedBy: {
+    type: String,
+    required: true,
+  },
+});
 
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     password: {
       type: String,
-      required: true
+      required: true,
     },
     role: {
       type: String,
-      enum: ["admin", "user"],
+      enum: ["superAdmin", "admin", "user"],
       required: true,
-      default: "user",
+      default: null,
     },
-    firstLogin:{
-      type:Boolean,
-      default:false
+
+    firstLogin: {
+      type: Boolean,
+      default: false,
     },
     otp: String,
     phonenumber: String,
-    refreshToken: { type: String, default: "" },
-    adminId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    refreshToken: {
+      type: String,
+      default: "",
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    superAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
     otpExpiresAt: Date,
+
+    actionHistory: {
+      type: [actionSchema],
+      default: [],
+    },
+    lastLogin: { type: Date, default: null },
+    loginCount: { type: Number, default: 0 },
+    status: { type: String },
+    superAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );
 
-
-//pre hook to save the hash password.
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
@@ -45,5 +103,5 @@ userSchema.pre('save', async function (next) {
   } catch (err) {
     return next(err);
   }
-})
+});
 module.exports = mongoose.model("User", userSchema);

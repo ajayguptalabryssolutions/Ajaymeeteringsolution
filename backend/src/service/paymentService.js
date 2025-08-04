@@ -1,140 +1,114 @@
 const Payment = require("../model/Payment");
 const Meter = require("../model/Meter")
-const mongoose = require("mongoose");
-// function getFailureReason(error) {
-//   if (!error) return "Unknown error";
-//   if (error.code === "TIMEOUT") return "Payment timeout";
-//   if (error.code === "INSUFFICIENT_FUNDS") return "Insufficient balance";
-//   if (error.code === "INVALID_UPI") return "Invalid UPI ID";
-//   if (error.code === "GATEWAY_ERROR") return "Payment gateway internal error";
-//   return error.message || "Unknown failure reason";
-// }
-
-const createPayment = async (paymentData) => {
-  try {
-    const {
-        meterId,
-      amount,
-      paymentMethod,
-      transactionId,
-      status,
-      remarks,
-      invoiceUrl,
-      receiptNumber,
-      source,
-      location,
-      ipAddress,
-      deviceInfo,
-      refund,
-      verifiedBy,
-      referrerCode,
-    } = paymentData;
-
-    // Validation
-    if (!meterId || !amount) {
-      throw new Error("meterId and amount are required");
-    }
-
-    const newPayment = new Payment({
-        meterId,
-      amount,
-      paymentMethod,
-      transactionId,
-      status,
-      remarks,
-      invoiceUrl,
-      receiptNumber,
-      source,
-      location,
-      ipAddress,
-      deviceInfo,
-      refund,
-      verifiedBy,
-      referrerCode,
-    });
-
-    return await newPayment.save();
-  } catch (err) {
-    console.error("PaymentService Error:", err);
-    throw err;
-  }
-};
-
-// const getPaymentHistory = async (meterId) => {
-//   try {
-//     if (!meterId) {
-//       throw new Error("meterId is required");
-//     }
-
-//     const paymentData = await Payment.find({ meterId }).sort({ createdAt: -1 });
-//     return paymentData;
-//   } catch (err) {
-//     console.error("PaymentService Error:", err);
-//     throw err;
-//   }
-// };
-
-const getPaymentHistory = async ({ meterId, startTime, endTime, search, paginationOptions }) => {
-  try {
-    const query = { meterId };
-
-    // Filter by date range
-  if (startTime || endTime) {
-  query.createdAt = {};
-  if (startTime) query.createdAt.$gte = new Date(startTime);
-  if (endTime) {
-    query.createdAt.$lte = new Date(new Date(endTime).setHours(23, 59, 59, 999));
-  }
-}
-
-    // Search by transactionId or remarks (customize fields as needed)
-    if (search) {
-      query.$or = [
-        { transactionId: { $regex: search, $options: "i" } },
-        { remarks: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const skip = (paginationOptions.page - 1) * paginationOptions.limit;
-
-    const [data, total] = await Promise.all([
-      Payment.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(paginationOptions.limit),
-
-      Payment.countDocuments(query)
-    ]);
-
-    return {
-      records: data,
-      total,
-      page: paginationOptions.page,
-      limit: paginationOptions.limit,
-      totalPages: Math.ceil(total / paginationOptions.limit),
-    };
-  } catch (err) {
-    console.error("PaymentService Error:", err);
-    throw err;
-  }
-};
-
-
-const getPaymentsByMeterId = async (meterIdString) => {
-  // Step 1: Find the meter by string-based meterId
-  const meter = await Meter.findOne({ meterId: meterIdString });
+const User = require("../model/User");
+const mongoose = require('mongoose')
+const getPaymentsByMeterId = async (meterId, startTime, endTime) => {
+    
+  const meter = await Meter.findOne({ meterId });
   if (!meter) {
     throw new Error("Meter not found");
   }
 
-  // Step 2: Get all payments with meterId referencing meter._id
-  const payments = await Payment.find({ meterId: meter._id }).sort({ createdAt: -1 });
+  // Step 2: Build date filter
+  const dateFilter = {};
+  if (startTime) dateFilter.$gte = new Date(startTime);
+  if (endTime) {
+    const end = new Date(endTime);
+    end.setHours(23, 59, 59, 999); // <-- Include entire day
+    dateFilter.$lte = end;
+  }
+
+  const query = {
+    meterId: meter._id,
+    ...(startTime || endTime ? { createdAt: dateFilter } : {})
+  };
+
+  // Step 3: Fetch payments with optional date filtering
+  const payments = await Payment.find(query).sort({ createdAt: -1 });
 
   return payments;
 };
 
-module.exports = {
-  createPayment,
-  getPaymentHistory,
-  getPaymentsByMeterId,
+
+const getNegativePaymentsByAdminId = async (adminId) => {
+  // Validate adminId before using
+  if (!mongoose.Types.ObjectId.isValid(adminId)) {
+    throw new Error("Invalid adminId");
+  }
+
+  // Perform aggregation to find latest negative payment per meter
+  const payments = await Meter.aggregate([
+    {
+      $match: {
+        adminId: new mongoose.Types.ObjectId(adminId) // ✅ safe usage
+      }
+    },
+    {
+      $lookup: {
+        from: "payments",
+        let: { meterId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$meterId", "$$meterId"] },
+                  { $lt: ["$amount", 0] } // Only negative payments
+                ]
+              }
+            }
+          },
+          { $sort: { createdAt: -1 } },
+          { $limit: 1 }
+        ],
+        as: "latestNegativePayment"
+      }
+    },
+    {
+      $match: {
+        latestNegativePayment: { $ne: [] } // Only keep meters with at least one negative payment
+      }
+    },
+    {
+      $unwind: "$latestNegativePayment"
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "assignedUserId",
+        foreignField: "_id",
+        as: "assignedUser"
+      }
+    },
+    {
+      $unwind: {
+        path: "$assignedUser",
+        preserveNullAndEmptyArrays: true // In case a meter has no assigned user
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        meter: {
+          _id: "$_id",
+          name: "$name",
+          meterId: "$meterId",
+          status:"$status"
+        },
+        assignedUser: {
+          _id: "$assignedUser._id",
+          name: "$assignedUser.name",
+          email: "$assignedUser.email",
+          phone: "$assignedUser.phonenumber"
+        },
+        payment: "$latestNegativePayment"
+      }
+    }
+  ]);
+
+  return payments;
 };
+
+
+
+module.exports = {getPaymentsByMeterId, getNegativePaymentsByAdminId}
