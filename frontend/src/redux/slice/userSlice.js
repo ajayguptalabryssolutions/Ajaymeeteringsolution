@@ -1,50 +1,47 @@
-// src/features/user/userSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-// Dummy API fetch simulation
-export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
-  return [
-    { id: "user001", name: "John Smith", email: "john@example.com", meters: ["MTR001", "MTR002"] },
-    { id: "user002", name: "Emma Johnson", email: "emma@example.com", meters: ["MTR003"] },
-    { id: "user003", name: "Michael Brown", email: "michael@example.com", meters: ["MTR004"] },
-    { id: "user004", name: "Sarah Davis", email: "sarah@example.com", meters: [] },
-    { id: "user005", name: "David Wilson", email: "david@example.com", meters: [] },
-  ];
+export const fetchUserProfile = createAsyncThunk('profile/fetchUserProfile', async (thunkAPI) => {
+  try {
+    const token = localStorage.getItem('authToken');
+    const res = await fetch('/api/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error('Failed to fetch user profile');
+    return await res.json();
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.message);
+  }
 });
 
 const userSlice = createSlice({
-  name: 'users',
+  name: 'profile',
   initialState: {
-    data: [],
-    loading: false,
+    profile: null,
+    status: 'idle',
     error: null,
-    search: '',
-    selectedUser: null,
   },
   reducers: {
-    setUserSearch(state, action) {
-      state.search = action.payload;
-    },
-    setSelectedUser(state, action) {
-      state.selectedUser = action.payload;
-    },
+    
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchUsers.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.status = 'loading';
         state.error = null;
       })
-      .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.loading = false;
-        state.data = action.payload;
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.profile = action.payload;
       })
-      .addCase(fetchUsers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
       });
   },
 });
 
-export const { setUserSearch, setSelectedUser } = userSlice.actions;
+export const selectUserProfile = (state) => state.user.profile;
+export const selectUserStatus = (state) => state.user.status;
 export default userSlice.reducer;

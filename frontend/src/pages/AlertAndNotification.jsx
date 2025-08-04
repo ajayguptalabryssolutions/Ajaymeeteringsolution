@@ -1,27 +1,14 @@
-import React from 'react'
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-import Header from "../components/header/Header";
-const AlertAndNotification = () => {
+// import React from 'react'
 
-  const dispatch = useDispatch();
-    useEffect(() => {
-      dispatch(setHeaderTitle("Notifications"));
-      dispatch(setBreadcrumbs([{ label: "Notifications" }]));
-    }, []);
+// const AlertAndNotification = () => {
+//   return (
+//     <div className='flex item-center justify-center'>
+//       Alert and Notifications
+//     </div>
+//   )
+// }
 
-  return (
-    <div className=' p-bg-blue-200/10 min-h-screen'>
-    <Header/>
-    <div className='flex item-center mt-[25%] justify-center'>
-      Notifications
-      </div>
-    </div>
-  )
-}
-
-export default AlertAndNotification
+// export default AlertAndNotification
 
 // import React, { useState } from "react";
 
@@ -126,31 +113,31 @@ export default AlertAndNotification
 // export default Chat
 
 
-// import React, { useEffect } from "react";
-// import { useDispatch } from "react-redux";
-// import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-// import Header from "../components/header/Header";
+import React, { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
+import Header from "../components/header/Header";
 
-// const AlertAndNotification = () => {
-//   const dispatch = useDispatch();
+const AlertAndNotification = () => {
+  const dispatch = useDispatch();
 
-//   useEffect(() => {
-//     dispatch(setHeaderTitle("Alert And Notification"));
-//     dispatch(
-//       setBreadcrumbs([
-//         // { label: "Home", link: "" },  // Updated label for clarity
-//         { label: "Alert and Notification" },
-//       ])
-//     );
-//   }, []);
+  useEffect(() => {
+    dispatch(setHeaderTitle("Alert And Notification"));
+    dispatch(
+      setBreadcrumbs([
+        // { label: "Home", link: "" },  // Updated label for clarity
+        { label: "Alert and Notification" },
+      ])
+    );
+  }, []);
 
-//   return (
-//     <div className="w-full h-full">
-//       <Header />
-//       {/* Page content goes here */}
-//     </div>
-//   );
-// };
+  return (
+    <div className="w-full h-full">
+      <Header />
+      {/* Page content goes here */}
+    </div>
+  );
+};
 
-// export default AlertAndNotification;
+export default AlertAndNotification;
 

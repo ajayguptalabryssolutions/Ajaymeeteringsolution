@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 
 import { Zap } from "lucide-react";
@@ -12,9 +13,18 @@ const MeterCard = ({ meter, onClick }) => {
         <div className="p-1.5 bg-blue-100 rounded-md">
           <Zap className="text-blue-600" size={24} />
         </div>
-        <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-          {meter.status}
-        </div>
+        
+
+
+        <div
+  className={`text-xs px-2 py-1 rounded-full font-medium ${
+    meter.status === "offline"
+      ? "bg-red-100 text-red-700"
+      : "bg-green-100 text-green-700"
+  }`}
+>
+  {meter.status}
+</div>
       </div>
 
       {/* <h3 className="text-[13px] font-semibold text-gray-800 truncate"> */}
@@ -43,3 +53,4 @@ const MeterCard = ({ meter, onClick }) => {
 };
 
 export default MeterCard;
+

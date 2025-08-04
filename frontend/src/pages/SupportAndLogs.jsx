@@ -1003,9 +1003,8 @@ import {
   Plus, Eye, Edit, Trash2, Search, Filter, Clock, User, AlertCircle, CheckCircle,
   Circle, MessageSquare, Mail, Phone, Calendar, Tag, Users, Settings
 } from "lucide-react";
-import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-import Header from "../components/header/Header";
-import { useSelector, useDispatch } from "react-redux";
+
+
 const TicketingSystem = () => {
   const [tickets, setTickets] = useState([
     {
@@ -1129,13 +1128,6 @@ const TicketingSystem = () => {
   const categories = ["Technical", "Billing", "Consultation", "Complaint", "Other"];
   const assignees = ["John Doe", "Jane Smith", "Bob Wilson", "Alice Johnson"];
 
-   
-   const dispatch = useDispatch();
-      useEffect(() => {
-        dispatch(setHeaderTitle("bill & payments"));
-        dispatch(setBreadcrumbs([{ label: "Bill & Payments" }]));
-      }, []);
-      
   const actionTemplates = {
     update_status: {
       name: 'Update Status',
@@ -1359,8 +1351,8 @@ const TicketingSystem = () => {
   const stats = getTicketStats();
 
   return (
-    <div className=" min-h-screen">
-      <Header/>
+    <div className="p-6">
+      
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}

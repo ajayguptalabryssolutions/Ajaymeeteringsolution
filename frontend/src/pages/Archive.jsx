@@ -44,22 +44,11 @@
 import React, { useState } from "react";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { useSelector, useDispatch } from "react-redux";
 
-import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-import Header from "../components/header/Header";
-import { useEffect } from "react";
-function Archive() {
+function App() {
   const [files, setFiles] = useState([
     { name: "example.txt", content: "This is an example file." },
   ]);
-
-  
-  const dispatch = useDispatch();
-    useEffect(() => {
-      dispatch(setHeaderTitle("Archive"));
-      dispatch(setBreadcrumbs([{ label: "Archive" }]));
-    }, []);
 
   const handleAddFile = () => {
     setFiles([...files, { name: "", content: "" }]);
@@ -86,11 +75,8 @@ function Archive() {
   };
 
   return (
-    <div className=" bg-blue-200/10 min-h-screen">
-    <Header/>
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-2xl font-bold mb-4">Archive Generator</h1>
-     
 
       {files.map((file, index) => (
         <div key={index} className="mb-4 bg-white p-4 rounded shadow">
@@ -128,8 +114,7 @@ function Archive() {
         Generate ZIP
       </button>
     </div>
-    </div>
   );
 }
 
-export default Archive;
+export default App;

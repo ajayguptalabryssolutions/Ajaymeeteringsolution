@@ -30,11 +30,8 @@ const Chat = () => {
   }, []);
 
   return (
-    <div className="  p-bg-blue-200/10 min-h-screen">
+    <div className="w-full h-full">
       <Header />
-      <div className="flex item-center mt-[25%] justify-center">
-      Chat pages
-      </div>
       {/* Page content goes here */}
     </div>
   );

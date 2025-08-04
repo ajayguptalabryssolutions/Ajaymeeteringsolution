@@ -1,23 +1,25 @@
 import axios from 'axios';
 
-// Create an Axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL, // Change to your API base URL
-//   timeout: 10000,
+  baseURL: import.meta.env.VITE_BACKEND_URL,
   headers: {
     'Content-Type': 'application/json',
-    // Add other global headers if needed
   },
 });
 
-const getToken = () => localStorage.getItem('token');
+const getToken = () => localStorage.getItem('authToken');
 
-// Optional: Add interceptors for auth, error handling, etc.
 api.interceptors.request.use(
   config => {
-    // Example: Attach token if available
     const token = getToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+
+    const skipAuthRoutes = ['/auth/login', '/auth/logout'];
+    const shouldSkip = skipAuthRoutes.some(route => config.url?.includes(route));
+
+    if (token && !shouldSkip) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   error => Promise.reject(error)
@@ -26,20 +28,72 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
-    // Handle errors globally
     return Promise.reject(error);
   }
 );
 
 const userManagement = {
+  UserById: (id) => api.get("user", id),
+  getUsersByQuery: ({ superAdminId, adminId, role, search }) =>
+    api.get("/user/users", {
+      params: {
+        superAdminId,
+        adminId,
+        role,
+        search,
+      },
+    }),
 
-       UserById : (id)=> api.get("user",id)
-}
-
-
+  updateUserById: (id, data) => api.patch(`/user/update-user/${id}`, data),
+  createUser: (data) => api.post("/user/create-user", data),
+  deleteUserById: (id) => api.delete(`/user/delete-user/${id}`),
+};
 
 const meterManagement = {
-    getAllMeters: () => api.get('/meter'),
+  getAllMeters: () => api.get('/meter'),
 }
 
-export {userManagement, meterManagement}
+const userDashboard = {
+  init: (id) => api.get(`/user/dashboard/init/${id}`),//intital data that have all the dashbaord data.
+}
+const authApis = {
+  login: (credential) => api.post('/auth/login', credential),
+  logout: () => api.post('/auth/logout'),
+}
+
+const userApi = {
+  profile: () => api.get('auth/profile')
+}
+
+const meterApi = {
+  getMeterById: (id) => api.get(`/meter/${id}`),
+  getAllMeter: () => api.get('meter/get-all-meter'),
+  addMeter: (data) => api.post('meter/create', data),
+  asignMeter: (data) => api.post('meter/assign-meter', data),
+  updateMeter: (id) => api.put(`/meter/update/${id}`),
+  deleteMeter: (id) => api.delete(`/meter/update/${id}`),
+  getAllMeterFromIOT: () => api.get('/meter/get-all-meter-from-iot'),
+  getMeterByMeterId: (meterId, params = {}) =>api.get(`/meter/by-meterId/${meterId}`, { params }),
+  getAllMeterWithPayment:() => api.get(`meter//get-all-meter-with-payment`),
+}
+
+
+export const adminDashboard = {
+  getRecentData: (adminId) => api.get(`user/adminDashboard/recent-data/${adminId}`),
+  getAdminDailyConsumption: (adminId) => api.get(`user/adminDashboard/get-admin-daily-consumption/${adminId}`),
+  getFilteredChartData: ({ adminId, from, to }) => {
+    const params = {};
+    if (from && to) {
+      params.from = from;
+      params.to = to;
+    }
+    return api.get(`user/adminDashboard/get-admin-daily-consumption/${adminId}`, { params });
+  },
+  getAdminUserMeterData: (adminId) => api.get(`user/adminDashboard/get-userdata-by-admin/${adminId}`),
+  getMeterListByAdmin: (adminId) => api.get(`user/adminDashboard/get-meter-by-admin/${adminId}`),
+  getDueBalanceUser :(adminId) => api.get(`user/negative-payments/${adminId}`)
+};
+const paymentApi = {
+  getPaymentHistoryById :(meterId, params={})=> api.get(`user/get-payment-history-by/${meterId}`,{params})
+}
+export { userManagement, meterManagement, authApis, userDashboard, userApi, meterApi,paymentApi }

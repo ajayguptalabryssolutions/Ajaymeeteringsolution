@@ -11,7 +11,7 @@ const Header = () => {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Breadcrumb Navigation */}
-      <div className="flex items-center gap-2 text-white h-[50px] bg-gradient-to-br from-cyan-400 to-blue-600 px-6">
+      <div className="flex items-center gap-2 text-white h-[50px] bg-cyan-600 px-6">
         <NavLink to="/" className="hover:text-gray-700">
           <FaHome />
         </NavLink>

@@ -1,8 +1,4 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
-import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-import Header from "../components/header/Header";
 
 const BillingAndPayment = () => {
   const [formData, setFormData] = useState({
@@ -10,14 +6,6 @@ const BillingAndPayment = () => {
     rechargeAmount: "",
     paymentMode: "",
   });
-
-    
-    const dispatch = useDispatch();
-      useEffect(() => {
-        dispatch(setHeaderTitle("bill & payments"));
-        dispatch(setBreadcrumbs([{ label: "Bill & Payments" }]));
-      }, []);
-  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,9 +17,7 @@ const BillingAndPayment = () => {
   };
 
   return (
-    <div className=" bg-blue-200/10 min-h-screen">
-      <Header />
-      <div className="flex item-center mt-[5%] justify-center">
+    <div className="flex flex-col items-center p-6 w-full">
       {/* <h2 className="text-2xl font-semibold mb-4">Total Next Payment</h2> */}
       <form
         className="border border-gray-300 p-6 rounded-md shadow-md w-96"
@@ -82,7 +68,6 @@ const BillingAndPayment = () => {
           </button>
         </div>
       </form>
-    </div>
     </div>
   );
 };

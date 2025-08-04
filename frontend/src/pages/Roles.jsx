@@ -16,13 +16,10 @@ const Roles = () => {
       ])
     );
   }, []);
- 
+
   return (
-    <div className=" p-bg-blue-200/10 min-h-screen">
+    <div className="w-full h-full">
       <Header />
-      <div className="flex item-center mt-[25%] justify-center">
-      Roles and Permissions
-      </div>
       {/* Page content goes here */}
     </div>
   );

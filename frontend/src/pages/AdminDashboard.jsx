@@ -1,9 +1,29 @@
+
 // import React, { useEffect, useState, useMemo, useCallback } from 'react';
-// import {
-//   Gauge, TrendingUp, Download, AlertTriangle, Zap, Bell, Calendar,
-//   Activity, Users, DollarSign, BarChart3, UserPlus, Search, Settings,
-//   Filter, RefreshCw, ChevronDown, Eye, TrendingDown, Clock, CheckCircle,
-//   XCircle, AlertCircle
+// import { 
+//   Gauge, 
+//   TrendingUp, 
+//   Download, 
+//   AlertTriangle, 
+//   Zap, 
+//   Bell, 
+//   Calendar,
+//   Activity,
+//   Users,
+//   DollarSign,
+//   BarChart3,
+//   UserPlus,
+//   Search,
+//   Settings,
+//   Filter,
+//   RefreshCw,
+//   ChevronDown,
+//   Eye,
+//   TrendingDown,
+//   Clock,
+//   CheckCircle,
+//   XCircle,
+//   AlertCircle
 // } from "lucide-react";
 
 // // Mock data for demo purposes
@@ -15,13 +35,11 @@
 //   }
 // ];
 
-// import { useSelector, useDispatch } from "react-redux";
-
-// import { setHeaderTitle, setBreadcrumbs } from "../redux/slice/headerSlice";
-// import Header from "../components/header/Header";
-
 // const Dashboard = () => {
+//   // State management
 //   const [startDate, setStartDate] = useState("2025-04-01");
+//   const [searchTerm, setSearchTerm] = useState("");
+//   const [selectedFilter, setSelectedFilter] = useState("all");
 //   const [refreshing, setRefreshing] = useState(false);
 //   const [notifications, setNotifications] = useState(23);
 //   const [alerts, setAlerts] = useState([
@@ -32,16 +50,12 @@
 
 //   const today = new Date().toISOString().split("T")[0];
 
-//    const dispatch = useDispatch();
-//     useEffect(() => {
-//       dispatch(setHeaderTitle("Admin Dashboard"));
-//       dispatch(setBreadcrumbs([{ label: "Admin Dashboard" }]));
-//     }, []);
-
+//   // Smart filtering and memoization
 //   const filteredCharts = useMemo(() => {
 //     return mockCharts.map(chart => {
 //       const from = new Date(startDate);
 //       const to = new Date();
+
 //       const filteredLabels = [];
 //       const filteredDataPoints = [];
 
@@ -61,34 +75,45 @@
 //     });
 //   }, [startDate]);
 
+//   // Smart refresh functionality
 //   const handleRefresh = useCallback(async () => {
 //     setRefreshing(true);
+//     // Simulate API call
 //     await new Promise(resolve => setTimeout(resolve, 1000));
 //     setRefreshing(false);
 //   }, []);
 
+//   // Smart notification management
+//   const handleNotificationRead = useCallback(() => {
+//     setNotifications(prev => Math.max(0, prev - 1));
+//   }, []);
+
+//   // Smart alert dismissal
 //   const dismissAlert = useCallback((alertId) => {
 //     setAlerts(prev => prev.filter(alert => alert.id !== alertId));
 //   }, []);
 
-//   const MetricsCard = ({ title, value, change, isPositive, icon: Icon, trend }) => (
-//     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 w-full">
+//   // Enhanced MetricsCard component
+//   const MetricsCard = ({ title, value, change, isPositive, icon: Icon, trend, className = "" }) => (
+//     <div className={`bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 ${className}`}>
 //       <div className="flex items-center justify-between mb-4">
 //         <div className={`p-3 rounded-xl ${isPositive ? 'bg-green-100' : 'bg-red-100'}`}>
 //           <Icon className={`${isPositive ? 'text-green-600' : 'text-red-600'}`} size={24} />
 //         </div>
 //         <div className="flex items-center space-x-1">
 //           {isPositive ? <TrendingUp size={16} className="text-green-600" /> : <TrendingDown size={16} className="text-red-600" />}
-//           <span className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>{change}</span>
+//           <span className={`text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+//             {change}
+//           </span>
 //         </div>
 //       </div>
 //       <div>
-//         <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+//         <h3 className="text-xs font-medium text-gray-600 mb-1">{title}</h3>
 //         <p className="text-2xl font-bold text-gray-900">{value}</p>
 //         {trend && (
 //           <div className="mt-2 h-12 bg-gray-50 rounded-sm flex items-end justify-between px-2 py-1">
 //             {trend.map((point, index) => (
-//               <div
+//               <div 
 //                 key={index}
 //                 className={`w-2 rounded-t ${isPositive ? 'bg-green-400' : 'bg-red-400'}`}
 //                 style={{ height: `${point}%` }}
@@ -100,33 +125,38 @@
 //     </div>
 //   );
 
+//   // Enhanced Chart component
 //   const EnhancedChart = ({ data }) => (
-//     <div className="w-full min-h-[200px] md:min-h-[300px] bg-gray-50 rounded-sm flex items-center justify-center">
+//     <div className="w-full h-80 bg-gray-50 rounded-sm flex items-center justify-center">
 //       <div className="text-center">
 //         <BarChart3 className="mx-auto mb-4 text-gray-400" size={48} />
 //         <p className="text-gray-600">Interactive Chart Placeholder</p>
-//         <p className="text-sm text-gray-500 mt-2">Data points: {data.dataPoints?.length || 0}</p>
+//         <p className="text-xs text-gray-500 mt-2">Data points: {data.dataPoints?.length || 0}</p>
 //       </div>
 //     </div>
 //   );
 
+//   // Smart Alert Panel
 //   const AlertPanel = () => (
-//     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow w-full">
-//       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+//     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+//       <div className="flex items-center justify-between mb-4">
 //         <div className="flex items-center space-x-3">
 //           <div className="p-2 bg-orange-100 rounded-sm">
 //             <AlertTriangle className="text-orange-600" size={20} />
 //           </div>
 //           <div>
 //             <h3 className="text-lg font-semibold text-gray-800">Smart Alerts</h3>
-//             <p className="text-sm text-gray-500">{alerts.length} active alerts</p>
+//             <p className="text-xs text-gray-500">{alerts.length} active alerts</p>
 //           </div>
 //         </div>
-//         <button onClick={() => setAlerts([])} className="text-sm text-blue-600 hover:text-blue-800">
+//         <button 
+//           onClick={() => setAlerts([])}
+//           className="text-xs text-blue-600 hover:text-blue-800"
+//         >
 //           Clear All
 //         </button>
 //       </div>
-//       <div className="space-y-3 max-h-[300px] overflow-y-auto">
+//       <div className="space-y-3">
 //         {alerts.map((alert) => (
 //           <div key={alert.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-sm">
 //             <div className="flex items-center space-x-3">
@@ -135,11 +165,14 @@
 //                 alert.type === 'warning' ? 'bg-orange-500' : 'bg-blue-500'
 //               }`} />
 //               <div>
-//                 <div className="text-sm font-medium text-gray-900">{alert.message}</div>
+//                 <div className="text-xs font-medium text-gray-900">{alert.message}</div>
 //                 <div className="text-xs text-gray-500">{alert.time}</div>
 //               </div>
 //             </div>
-//             <button onClick={() => dismissAlert(alert.id)} className="text-gray-400 hover:text-gray-600">
+//             <button 
+//               onClick={() => dismissAlert(alert.id)}
+//               className="text-gray-400 hover:text-gray-600"
+//             >
 //               <XCircle size={16} />
 //             </button>
 //           </div>
@@ -149,33 +182,36 @@
 //   );
 
 //   return (
-//     <div className="bg-blue-200/20 min-h-screen">
-//     <Header/>
-//       {/* Header */}
-//       <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
-//         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-//           <div>
-//             <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">Admin Dashboard</h1>
-//             <p className="text-xs text-gray-500"><span className='font-bold'>Hello {"user"}</span> Welcome to Real-time energy management system</p>
-//           </div>
-//           <div className="flex items-center flex-wrap gap-2 text-sm text-gray-600">
-//             <Clock size={16} />
-//             <span>Last updated: {new Date().toLocaleTimeString()}</span>
-//             <button
-//               onClick={handleRefresh}
-//               disabled={refreshing}
-//               className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
-//             >
-//               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-//               {refreshing ? 'Refreshing...' : 'Refresh'}
-//             </button>
+//     <div className="bg-blue-200/10 min-h-screen">
+//       {/* Smart Header Section */}
+//       <div className="bg-white shadow-sm border-b border-gray-200">
+//         <div className="px-6 py-4">
+//           <div className="flex justify-between items-center">
+//             <div>
+//               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+//               <p className="text-xs text-gray-500"><span className='font-bold'>Hello {"user"}</span> Welcome to Real-time energy management system</p>
+//             </div>
+//             <div className="flex items-center space-x-3">
+//               <div className="flex items-center space-x-2 text-xs text-gray-600">
+//                 <Clock size={16} />
+//                 <span>Last updated: {new Date().toLocaleTimeString()}</span>
+//               </div>
+//               <button 
+//                 onClick={handleRefresh}
+//                 disabled={refreshing}
+//                 className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 disabled:opacity-50 transition-colors"
+//               >
+//                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+//                 {refreshing ? 'Refreshing...' : 'Refresh'}
+//               </button>
+//             </div>
 //           </div>
 //         </div>
 //       </div>
 
-//       {/* Revenue Summary */}
-//       <div className="mx-4 sm:mx-6 mt-6 mb-4 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow">
-//         <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 gap-6">
+//       {/* Smart Revenue Banner */}
+//       <div className="mx-6 mt-6 mb-4 bg-white border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow">
+//         <div className="flex justify-between items-center p-6">
 //           <div className="flex items-center space-x-6">
 //             <div className="p-4 bg-emerald-100 rounded-2xl">
 //               <DollarSign className="text-emerald-600" size={32} />
@@ -184,22 +220,24 @@
 //               <h2 className="text-lg font-semibold text-emerald-800 mb-1">Total Revenue</h2>
 //               <div className="flex items-baseline space-x-2">
 //                 <span className="text-3xl font-bold text-emerald-900">$95,000</span>
-//                 <span className="text-sm text-emerald-600 flex items-center">
-//                   <TrendingUp size={14} className="mr-1" /> +12.5%
+//                 <span className="text-xs text-emerald-600 flex items-center">
+//                   <TrendingUp size={14} className="mr-1" />
+//                   +12.5% from last month
 //                 </span>
 //               </div>
 //             </div>
 //           </div>
-//           <div className="flex flex-wrap gap-6 justify-between">
+
+//           <div className="flex items-center space-x-6">
 //             <div className="text-center">
 //               <div className="text-2xl font-bold text-emerald-900">1,247</div>
-//               <div className="text-sm text-emerald-600">Active Users</div>
+//               <div className="text-xs text-emerald-600">Active Users</div>
 //             </div>
 //             <div className="text-center">
 //               <div className="text-2xl font-bold text-emerald-900">25/30</div>
-//               <div className="text-sm text-emerald-600">Active Meters</div>
+//               <div className="text-xs text-emerald-600">Active Meters</div>
 //             </div>
-//             <button className="flex items-center px-4 py-2 bg-white/80 rounded-xl border border-emerald-200 hover:bg-white transition-colors">
+//             <button className="flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl border border-emerald-200 hover:bg-white transition-colors">
 //               <Download className="text-emerald-600 mr-2" size={18} />
 //               <span className="text-emerald-700 font-medium">Export</span>
 //             </button>
@@ -207,79 +245,130 @@
 //         </div>
 //       </div>
 
-//       {/* Grid Content */}
-//       <div className="px-4 sm:px-6 pb-6">
-//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-//           <MetricsCard title="Total Users" value="44,071" change="30.8%" isPositive={true} icon={Users} trend={[20, 40, 60, 80, 100, 85, 90]} />
-//           <MetricsCard title="Faulty Meters" value="8" change="2.3%" isPositive={false} icon={AlertTriangle} trend={[10, 15, 8, 12, 20, 18, 8]} />
-//           <MetricsCard title="Next Payment" value="$2,829" change="-1.43%" isPositive={false} icon={DollarSign} trend={[80, 70, 85, 75, 90, 85, 75]} />
-//           <MetricsCard title="Energy Consumption" value="12,300 kWh" change="18.9%" isPositive={true} icon={Zap} trend={[30, 50, 70, 90, 85, 95, 100]} />
-//         </div>
+//       {/* Smart Dashboard Grid */}
+//       <div className="px-6 pb-6">
+//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 
-//         <div className="mt-6">
-//           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-//             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-//               <div className="flex items-center space-x-3">
-//                 <div className="p-2 bg-blue-100 rounded-sm">
-//                   <BarChart3 className="text-blue-600" size={24} />
+//           {/* Enhanced Metrics Cards */}
+//           <MetricsCard
+//             title="Total Users"
+//             value="44,071"
+//             change="30.8%"
+//             isPositive={true}
+//             icon={Users}
+//             trend={[20, 40, 60, 80, 100, 85, 90]}
+//           />
+
+//           <MetricsCard
+//             title="Faulty Meters"
+//             value="8"
+//             change="2.3%"
+//             isPositive={false}
+//             icon={AlertTriangle}
+//             trend={[10, 15, 8, 12, 20, 18, 8]}
+//           />
+
+//           <MetricsCard
+//             title="Next Payment"
+//             value="$2,829"
+//             change="-1.43%"
+//             isPositive={false}
+//             icon={DollarSign}
+//             trend={[80, 70, 85, 75, 90, 85, 75]}
+//           />
+
+//           <MetricsCard
+//             title="Energy Consumption"
+//             value="12,300 kWh"
+//             change="18.9%"
+//             isPositive={true}
+//             icon={Zap}
+//             trend={[30, 50, 70, 90, 85, 95, 100]}
+//           />
+
+//           {/* Enhanced Chart Section */}
+//           <div className="md:col-span-2 lg:col-span-3 xl:col-span-4">
+//             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+//               <div className="flex justify-between items-center mb-6">
+//                 <div className="flex items-center space-x-3">
+//                   <div className="p-2 bg-blue-100 rounded-sm">
+//                     <BarChart3 className="text-blue-600" size={24} />
+//                   </div>
+//                   <div>
+//                     <h2 className="text-md font-bold text-gray-800">Smart Usage Analytics</h2>
+//                     <p className="text-xs text-gray-500">AI-powered consumption insights</p>
+//                   </div>
 //                 </div>
-//                 <div>
-//                   <h2 className="text-xl font-bold text-gray-800">Smart Usage Analytics</h2>
-//                   <p className="text-sm text-gray-500">AI-powered consumption insights</p>
+//                 <div className="flex items-center space-x-4">
+//                   <div className="flex items-center space-x-4">
+//                     <div className="flex items-center space-x-2">
+//                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+//                       <span className="text-xs text-gray-600">Current</span>
+//                     </div>
+//                     <div className="flex items-center space-x-2">
+//                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+//                       <span className="text-xs text-gray-600">Previous</span>
+//                     </div>
+//                   </div>
+//                   <div className="flex items-center space-x-2">
+//                     <label className="text-xs font-medium text-gray-700">From:</label>
+//                     <input
+//                       type="date"
+//                       value={startDate}
+//                       max={today}
+//                       onChange={(e) => setStartDate(e.target.value)}
+//                       className="px-3 py-2 border border-gray-300 rounded-sm text-xs focus:ring-2 focus:ring-blue-500"
+//                     />
+//                   </div>
 //                 </div>
 //               </div>
-//               <div className="flex flex-wrap items-center gap-4">
-//                 <div className="flex items-center gap-2">
-//                   <label className="text-sm font-medium text-gray-700">From:</label>
-//                   <input
-//                     type="date"
-//                     value={startDate}
-//                     max={today}
-//                     onChange={(e) => setStartDate(e.target.value)}
-//                     className="px-3 py-2 border border-gray-300 rounded-sm text-sm focus:ring-2 focus:ring-blue-500"
-//                   />
-//                 </div>
+//               <EnhancedChart data={filteredCharts[0] || { dataPoints: [] }} />
+//             </div>
+//           </div>
+
+//           {/* Smart Alert Panel */}
+//           <div className="lg:col-span-2">
+//             <AlertPanel />
+//           </div>
+
+//           {/* Enhanced Status Cards */}
+//           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-shadow">
+//             <div className="flex items-center justify-between mb-4">
+//               <div className="p-3 bg-green-100 rounded-xl">
+//                 <Gauge className="text-green-600" size={24} />
+//               </div>
+//               <div className="flex items-center space-x-2">
+//                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+//                 <span className="text-xs text-green-700 font-medium">ONLINE</span>
 //               </div>
 //             </div>
-//             <EnhancedChart data={filteredCharts[0] || { dataPoints: [] }} />
-//           </div>
-//         </div>
-
-//         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-//           <AlertPanel />
-//           <div className="space-y-6">
-//             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-shadow">
-//               <div className="flex items-center justify-between mb-4">
-//                 <div className="p-3 bg-green-100 rounded-xl">
-//                   <Gauge className="text-green-600" size={24} />
-//                 </div>
-//                 <div className="flex items-center space-x-2">
-//                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-//                   <span className="text-xs text-green-700 font-medium">ONLINE</span>
-//                 </div>
-//               </div>
+//             <div>
 //               <h3 className="text-lg font-semibold text-gray-800 mb-2">Smart Meters</h3>
 //               <div className="flex items-baseline space-x-2 mb-3">
 //                 <span className="text-2xl font-bold text-green-600">25</span>
 //                 <span className="text-lg text-gray-500">/30</span>
-//                 <span className="text-sm text-green-600">(83%)</span>
+//                 <span className="text-xs text-green-600">(83%)</span>
 //               </div>
 //               <div className="w-full bg-green-200 rounded-full h-3 mb-2">
 //                 <div className="bg-green-500 h-3 rounded-full transition-all duration-500" style={{ width: '83%' }}></div>
 //               </div>
-//               <p className="text-sm text-gray-600">5 meters scheduled for maintenance</p>
+//               <p className="text-xs text-gray-600">5 meters scheduled for maintenance</p>
 //             </div>
+//           </div>
 
-//             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-//               <div className="flex items-center justify-between mb-4">
-//                 <div className="p-3 bg-blue-100 rounded-xl">
-//                   <Activity className="text-blue-600" size={24} />
-//                 </div>
-//                 <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">EXCELLENT</div>
+//           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+//             <div className="flex items-center justify-between mb-4">
+//               <div className="p-3 bg-blue-100 rounded-xl">
+//                 <Activity className="text-blue-600" size={24} />
 //               </div>
+//               <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+//                 EXCELLENT
+//               </div>
+//             </div>
+//             <div>
 //               <h3 className="text-lg font-semibold text-gray-800 mb-2">System Health</h3>
 //               <div className="text-2xl font-bold text-blue-600 mb-3">98.5%</div>
-//               <div className="space-y-2 text-sm">
+//               <div className="space-y-2 text-xs">
 //                 <div className="flex justify-between">
 //                   <span className="text-gray-600">Uptime</span>
 //                   <span className="font-medium">99.2%</span>
@@ -299,10 +388,11 @@
 
 // export default Dashboard;
 
+
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDashboardData } from "../redux/slice/adminDashboardDataSlice"; // adjust path as needed
+import { fetchDashboardData } from "../redux/thunks/adminDashboardThunks";
 import { Link } from "react-router-dom";
 
 import {
@@ -339,24 +429,12 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-// import MeterList from "../components/MeterList";
-import {
-  fetchAdminMeters,
-  selectFilteredAdminMeters,
-} from "../redux/slice/meterSlice";
 import MeterList from "../components/MeterList";
-// import { BarChart3 } from "lucide-react";
 import CurrentPowerChart from "../components/meterManagement/CurrentPowerChart";
-// Mock data for demo purposes
-// const mockCharts = [
-//   {
-//     id: 1,
-//     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-//     dataPoints: [65, 59, 80, 81, 56, 55],
-//   },
-// ];
+import { fetchAdminDailyConsumption, fetchFilteredChartData,fetchMeterListByAdmin } from "../redux/thunks/adminDashboardThunks";
+import { selectUserId } from '../redux/slice/authSlice'
+import { selectMeterList, selectLoading, selectDailyConsuption, selectError,selectFetchDashboardData} from '../redux/slice/adminDashboardSlice';
 
-import { fetchAdminDailyConsumption } from "../redux/slice/adminDashboardDataSlice";
 const mockCharts = [
   {
     id: 1,
@@ -370,39 +448,39 @@ const mockCharts = [
 ];
 
 const Dashboard = () => {
-  const [startDate, setStartDate] = useState("2025-04-01");
+  // const [startDate, setStartDate] = useState("2025-04-01");
+  const today = new Date().toISOString().split("T")[0];
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today); // Add endDate state
   const [refreshing, setRefreshing] = useState(false);
   const [notifications, setNotifications] = useState(23);
-  const dispatch = useDispatch();
-  const adminId = "68774978c2cb68989bbf187b"; // Replace with dynamic if needed
-  //   const [alerts, setAlerts] = useState([
-  //     {
-  //       id: 1,
-  //       type: "critical",
-  //       message: "Meter #245 offline",
-  //       time: "2 min ago",
-  //     },
-  //     {
-  //       id: 2,
-  //       type: "warning",
-  //       message: "High usage detected",
-  //       time: "5 min ago",
-  //     },
-  //     {
-  //       id: 3,
-  //       type: "info",
-  //       message: "System update available",
-  //       time: "1 hour ago",
-  //     },
-  //   ]);
-  const meters = useSelector(selectFilteredAdminMeters);
-  const loading = useSelector((state) => state.meters.adminLoading);
-  // const error = useSelector((state) => state.meters.adminError);
-  console.log("======", meters);
+  const [filters, setFilters] = useState({
+    status: "all",
+    type: "all"
+  });
 
-  useEffect(() => {
-    dispatch(fetchAdminMeters(adminId));
-  }, [dispatch, adminId]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const dispatch = useDispatch();
+
+
+
+  const adminId = useSelector(selectUserId);
+  const loading = useSelector(selectLoading);
+  const fetchAdminMeters = useSelector(selectMeterList);
+
+  const meters = fetchAdminMeters.filter((meter) => {
+    const matchesStatus = filters.status === 'all' || meter.status === filters.status;
+    const matchesType = filters.type === 'all' || meter.type === filters.type;
+    const matchesSearch =
+      meter.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      meter.meterId?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesStatus && matchesType && matchesSearch;
+  });
+
+
+  console.log("======", meters);
 
   const mockAdminNotifications = [
     {
@@ -654,64 +732,71 @@ const Dashboard = () => {
 
   const [alerts, setAlerts] = useState(initialAlerts);
 
-  //   const [isExportOpen, setIsExportOpen] = useState(false);
-  //   const handleExportClick = (format) => {
-  //     console.log(`Exporting as ${format}`);
-  //     setIsExportOpen(false);
-  //     // Add your export logic here
-  //   };   later i will integrate
-
-  const today = new Date().toISOString().split("T")[0];
-
   const [adminDashboardData, setAdminDashboardData] = useState(null);
-  //   const today = new Date().toISOString().split("T")[0];
-
-  //   const [adminDashboardData, setAdminDashboardData] = useState(null);
 
   console.log(useSelector((state) => state.adminDashboardData));
-  const { data, error } = useSelector((state) => state.adminDashboardData);
+  const data = useSelector(selectFetchDashboardData);
+  const error = useSelector(selectError);
 
+  // Fetch initial data
   useEffect(() => {
-    // dispatch(fetchDashboardData("64acbd8fc9e77a6fba123001"));
-    dispatch(fetchDashboardData("68774978c2cb68989bbf187b"));
-    dispatch(fetchAdminDailyConsumption("68774978c2cb68989bbf187b"));
-    if (!loading && data) {
-      setAdminDashboardData(data);
-    }
+    dispatch(fetchDashboardData(adminId));
+    dispatch(fetchAdminDailyConsumption(adminId));
+    dispatch(fetchMeterListByAdmin(adminId));
   }, [dispatch, adminId]);
 
-  const { dailyConsumption } = useSelector((state) => state.adminDashboardData);
+  // In your Dashboard component
+  useEffect(() => {
+    
+    if (startDate === today && endDate === today) {
+      // Consistent parameter passing - always use object format
+      dispatch(fetchFilteredChartData({ adminId }));
+    } else {
+      dispatch(
+        fetchFilteredChartData({ adminId, from: startDate, to: endDate })
+      );
+    }
+  }, [startDate, endDate, dispatch]); // Remove adminId from dependencies since it's constant
 
-  const labels =
-    dailyConsumption?.map((item) =>
-      new Date(item.updatedAt).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "short",
-      })
-    ) || [];
+  
+  const dailyConsumption = useSelector(selectDailyConsuption);
 
-  const dataPoints =
-    dailyConsumption?.map((item) => parseFloat(item.totalAdminConsumption)) ||
-    [];
+
+  const labels = dailyConsumption?.map((item) => {
+    const date = new Date(item.latestUpdatedAt
+    );
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+    });
+  }) || [];
+
+
+
+  const dataPoints = dailyConsumption?.map((item) => {
+    // Use latestTotalConsumption instead of totalAdminConsumption
+    // Also handle null/undefined cases by providing a default value (0 in this case)
+    return parseFloat(item.latestTotalConsumption || 0);
+  }) || [];
 
   console.log(labels, dataPoints);
 
-  // Transform the data correctly
+
   const chartData = [
     {
       id: "daily-consumption",
       title: "Admin Daily Consumption",
-      labels:
-        dailyConsumption?.map((item) =>
-          new Date(item.updatedAt).toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-          })
-        ) || [],
-      dataPoints:
-        dailyConsumption?.map((item) =>
-          parseFloat(item.totalAdminConsumption)
-        ) || [],
+      labels: dailyConsumption?.map((item) => {
+        const date = new Date(item.latestUpdatedAt
+        );
+        return date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        });
+      }) || [],
+      dataPoints: dailyConsumption?.map((item) => {
+        return parseFloat(item.latestTotalConsumption || 0);
+      }) || [],
       barColor: "rgba(75, 192, 192, 0.6)",
       bgColor: "rgba(75, 192, 192, 1)",
     },
@@ -769,101 +854,7 @@ const Dashboard = () => {
   const percentage = total > 0 ? Math.round((totalActive / total) * 100) : 0;
 
   console.log(data.data.totalRevenue);
-  //   const MetricsCard = ({
-  //     title,
-  //     value,
-  //     change,
-  //     isPositive,
-  //     icon: Icon,
-  //     trend,
-  //   }) => (
-  //     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 w-full">
-  //       <div className="flex items-center justify-between mb-4">
-  //         <div
-  //           className={`p-3 rounded-xl ${
-  //             isPositive ? "bg-green-100" : "bg-red-100"
-  //           }`}
-  //         >
-  //           <Icon
-  //             className={`${isPositive ? "text-green-600" : "text-red-600"}`}
-  //             size={24}
-  //           />
-  //         </div>
-  //         <div className="flex items-center space-x-1">
-  //           {isPositive ? (
-  //             <TrendingUp size={16} className="text-green-600" />
-  //           ) : (
-  //             <TrendingDown size={16} className="text-red-600" />
-  //           )}
-  //           <span
-  //             className={`text-sm font-medium ${
-  //               isPositive ? "text-green-600" : "text-red-600"
-  //             }`}
-  //           >
-  //             {change}
-  //           </span>
-  //         </div>
-  //       </div>
-  //       <div>
-  // {/*
-  //        <div className="flex">
-  //           <Link to="/userlist">    <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-  //         <p className="text-2xl font-bold text-gray-900">{value}</p></Link>
-  //           <Link to="/userlist">    <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-  //         <p className="text-2xl font-bold text-gray-900">{value}</p></Link>
-  //        </div> */}
 
-  //         <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-  //         <p className="text-2xl font-bold text-gray-900">{value}</p>
-  //         {trend && (
-  //           <div className="mt-2 h-12 bg-gray-50 rounded-sm flex items-end justify-between px-2 py-1">
-  //             {trend.map((point, index) => (
-  //               <div
-  //                 key={index}
-  //                 className={`w-2 rounded-t ${
-  //                   isPositive ? "bg-green-400" : "bg-red-400"
-  //                 }`}
-  //                 style={{ height: `${point}%` }}
-  //               />
-  //             ))}
-  //           </div>
-  //         )}
-  //       </div>
-  //     </div>
-  //   );
-
-  //   const EnhancedChart = ({ data }) =>{
-  //     const chartData =
-  //     data?.labels?.map((label, index) => ({
-  //       name: label,
-  //       value: data.dataPoints[index],
-  //     })) || [];
-  //     return (
-  //     <div className="w-full min-h-[200px] md:min-h-[300px] bg-gray-50 rounded-sm p-4">
-  //       {chartData.length === 0 ? (
-  //         <div className="flex flex-col items-center justify-center h-full text-center">
-  //           <BarChart3 className="mx-auto mb-4 text-gray-400" size={48} />
-  //           <p className="text-gray-600">No chart data available</p>
-  //           <p className="text-sm text-gray-500 mt-2">
-  //             Data points: {data?.dataPoints?.length || 0}
-  //           </p>
-  //         </div>
-  //       ) : (
-  //         <ResponsiveContainer width="100%" height={250}>
-  //           <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
-  //             <CartesianGrid strokeDasharray="3 3" />
-  //             <XAxis dataKey="name" stroke="#888" />
-  //             <YAxis stroke="#888" />
-  //             <Tooltip />
-  //             <Bar dataKey="value"  stroke="none"  fill="#4bc0c099" radius={[4, 4, 0, 0]} />
-  //           </BarChart>
-  //         </ResponsiveContainer>
-  //       )}
-  //     </div>
-  //   );
-  // };
-
-  // Custom Tooltip Component
   const MetricsCard = ({
     title,
     value,
@@ -873,17 +864,14 @@ const Dashboard = () => {
     trend,
     subLabel, // e.g., "Total Meters"
     subValue, // e.g., 12345
-    subLabel2,
-    subValue2, // e.g. 67890
     valueRoute, // e.g. "/users"
     subValueRoute, // e.g. "/meters"
   }) => (
     <div className="bg-white rounded-md shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 w-full">
       <div className="flex items-center justify-between mb-4">
         <div
-          className={`p-3 rounded-xl ${
-            isPositive ? "bg-green-100" : "bg-red-100"
-          }`}
+          className={`p-3 rounded-xl ${isPositive ? "bg-green-100" : "bg-red-100"
+            }`}
         >
           <Icon
             className={`${isPositive ? "text-green-600" : "text-red-600"}`}
@@ -891,19 +879,29 @@ const Dashboard = () => {
           />
         </div>
         <div className="flex items-center space-x-1">
-          {isPositive ? (
-            <TrendingUp size={16} className="text-green-600" />
-          ) : (
-            <TrendingDown size={16} className="text-red-600" />
-          )}
-          <span
-            className={`text-sm font-medium ${
-              isPositive ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {change}
-          </span>
+          <div className="relative group flex items-center space-x-1 text-xs font-medium">
+            {isPositive ? (
+              <TrendingUp size={16} className="text-green-600" />
+            ) : (
+              <TrendingDown size={16} className="text-red-600" />
+            )}
+
+            <span
+              className={`text-xs font-semibold ${isPositive ? "text-green-600" : "text-red-600"
+                }`}
+            >
+              {change}
+            </span>
+
+            {/* Tooltip */}
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max px-2 py-1 text-xs text-black bg-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+              Vs Previous Day
+            </div>
+          </div>
         </div>
+
+        {/*
+         */}
       </div>
 
       <div>
@@ -915,7 +913,7 @@ const Dashboard = () => {
                 to={valueRoute}
                 className="text-2xl font-bold text-gray-900 hover:underline cursor-pointer"
               >
-                <h3 className="text-sm font-medium text-gray-600 mb-1">
+                <h3 className="text-xs font-medium text-gray-600 mb-1">
                   {title}
                 </h3>
                 <p className="text-2xl font-bold text-gray-900">{value}</p>
@@ -923,7 +921,7 @@ const Dashboard = () => {
             ) : (
               <>
                 {" "}
-                <h3 className="text-sm font-medium text-gray-600 mb-1">
+                <h3 className="text-xs font-medium text-gray-600 mb-1">
                   {title}
                 </h3>
                 <p className="text-2xl font-bold text-gray-900">{value}</p>
@@ -938,7 +936,7 @@ const Dashboard = () => {
                 to={subValueRoute}
                 className="text-2xl font-bold text-gray-900 hover:underline cursor-pointer"
               >
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-xs font-medium text-gray-600 mb-1">
                   {subLabel}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">{subValue}</p>
@@ -946,7 +944,7 @@ const Dashboard = () => {
             ) : (
               <>
                 {" "}
-                <p className="text-sm font-medium text-gray-600 mb-1">
+                <p className="text-xs font-medium text-gray-600 mb-1">
                   {subLabel}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">{subValue}</p>
@@ -962,9 +960,8 @@ const Dashboard = () => {
             {trend.map((point, index) => (
               <div
                 key={index}
-                className={`w-2 rounded-t ${
-                  isPositive ? "bg-green-400" : "bg-red-400"
-                }`}
+                className={`w-2 rounded-t ${isPositive ? "bg-green-400" : "bg-red-400"
+                  }`}
                 style={{ height: `${point}%` }}
               />
             ))}
@@ -977,7 +974,7 @@ const Dashboard = () => {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-gray-200 rounded-md p-2 shadow text-sm text-gray-800">
+        <div className="bg-white border border-gray-200 rounded-md p-2 shadow text-xs text-gray-800">
           <p className="font-semibold">{label}</p>
           <p>Value: {payload[0].value}</p>
         </div>
@@ -999,7 +996,7 @@ const Dashboard = () => {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <BarChart3 className="mx-auto mb-4 text-gray-400" size={48} />
             <p className="text-gray-600">No chart data available</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Data points: {data?.dataPoints?.length || 0}
             </p>
           </div>
@@ -1045,14 +1042,14 @@ const Dashboard = () => {
             <h3 className="text-lg font-semibold text-gray-800">
               Smart Alerts
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               {alerts.length} active alerts
             </p>
           </div>
         </div>
         <button
           onClick={() => setAlerts([])}
-          className="text-sm text-blue-600 hover:text-blue-800"
+          className="text-xs text-blue-600 hover:text-blue-800"
         >
           Clear All
         </button>
@@ -1071,7 +1068,7 @@ const Dashboard = () => {
                 )}`}
               />
               <div>
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-xs font-medium text-gray-900">
                   {alert.message}
                 </div>
                 <div className="text-xs text-gray-500">
@@ -1097,7 +1094,7 @@ const Dashboard = () => {
       <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900">
+            <h1 className="text-md sm:text-lg md:text-xl font-semibold text-gray-900">
               Admin Dashboard
             </h1>
             <p className="text-xs text-gray-500">
@@ -1105,7 +1102,7 @@ const Dashboard = () => {
               Real-time energy management system
             </p>
           </div>
-          <div className="flex items-center flex-wrap gap-2 text-sm text-gray-600">
+          <div className="flex items-center flex-wrap gap-2 text-xs text-gray-600">
             <Clock size={16} />
             <span>Last updated: {new Date().toLocaleTimeString()}</span>
             <button
@@ -1138,8 +1135,11 @@ const Dashboard = () => {
                 <span className="text-3xl font-bold text-emerald-900">
                   {data.data.totalRevenue}
                 </span>
-                <span className="text-sm text-emerald-600 flex items-center">
+                <span className="text-xs text-emerald-600 flex items-center group relative">
                   <TrendingUp size={14} className="mr-1" /> +12.5%
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 w-max px-2 py-1 text-xs text-black bg-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                    Vs Previous Day
+                  </div>
                 </span>
               </div>
             </div>
@@ -1150,14 +1150,14 @@ const Dashboard = () => {
               <div className="text-2xl font-bold text-emerald-900">
                 {data.data.totalAssignedUsers}
               </div>
-              <div className="text-sm text-emerald-600">Active Users</div>
+              <div className="text-xs text-emerald-600">Active Users</div>
             </div>
             <div className="text-center">
               {/* <div className="text-2xl font-bold text-emerald-900">25/30</div> */}
               <div className="text-2xl font-bold text-emerald-900">
                 {data.data.totalActiveMeters}
               </div>
-              <div className="text-sm text-emerald-600">Active Meters</div>
+              <div className="text-xs text-emerald-600">Active Meters</div>
             </div>
             <button className="flex items-center px-4 py-2 bg-white/80 rounded-xl border border-emerald-200 hover:bg-white transition-colors">
               <Download className="text-emerald-600 mr-2" size={18} />
@@ -1192,37 +1192,37 @@ const Dashboard = () => {
             isPositive={true}
             icon={Users}
             trend={[20, 40, 60, 80, 100, 85, 90]}
-            valueRoute="/userlist"
-            subValueRoute="/meterslist"
+            valueRoute="/admin/user-list"
+            subValueRoute="/admin/meters-list"
           />
           {/* </Link> */}
 
           {/* <MetricsCard title="Faulty Meters" value="8" change="2.3%" isPositive={false} icon={AlertTriangle} trend={[10, 15, 8, 12, 20, 18, 8]} /> */}
           <MetricsCard
-
-            subLabel2="Online Meters"
-            subValu2={data.data.totalMeters}
-
             title="Faulty Meters"
             value={data.data.totalFaultyMeters}
             subLabel="Offline Meters"
-            subValue={data.data.totalFaultyMeters}
-
-           
+            subValue={data.data.totalOfflineMeters}
             change="2.3%"
             isPositive={false}
             icon={AlertTriangle}
             trend={[10, 15, 8, 12, 20, 18, 8]}
+            valueRoute="/admin/faulty-meters"
+            subValueRoute="/admin/offline-meters"
           />
 
           {/* <MetricsCard title="Next Payment" value="$2,829" change="-1.43%" isPositive={false} icon={DollarSign} trend={[80, 70, 85, 75, 90, 85, 75]} /> */}
           <MetricsCard
             title="Due Balance"
             value={data.data.negativeRevenue}
+            subLabel="Due Users"
+            // subValue={data.data.totalDueUsers}
             change="-1.43%"
             isPositive={false}
             icon={DollarSign}
             trend={[80, 70, 85, 75, 90, 85, 75]}
+            // valueRoute="/admin/due-balance"
+            subValueRoute={`/admin/dashboard/duebalanceuser/${adminId}`}
           />
           {/* <MetricsCard title="Energy Consumption" value="12,300 kWh" change="18.9%" isPositive={true} icon={Zap} trend={[30, 50, 70, 90, 85, 95, 100]} /> */}
           <MetricsCard
@@ -1244,42 +1244,64 @@ const Dashboard = () => {
                 </div>
 
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">
+                  <h2 className="text-md font-bold text-gray-800">
                     Smart Usage Analytics
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs text-gray-500">
                     AI-powered consumption insights
                   </p>
                 </div>
               </div>
+
               <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    From:
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    max={today}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-sm text-sm focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <Calendar className="h-4 w-4 inline mr-1" />
+                      From Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      max={endDate || today} // Ensure from date can't be after to date
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                    />
+                  </div>
                 </div>
+
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <Calendar className="h-4 w-4 inline mr-1" />
+                      Last Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      min={startDate} // Ensure to date can't be before from date
+                      max={today}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setStartDate(today);
+                    setEndDate(today);
+                  }}
+                  className="px-3 py-2 text-xs bg-gray-100 font-medium text-gray-700 rounded-sm"
+                >
+                  Reset
+                </button>
               </div>
             </div>
             {/* <EnhancedChart data={filteredCharts[0] || { dataPoints: [] }} /> */}
 
             {/* Chart Section */}
 
-            {/* <div className="mt-6">
-  {chartData.map((chart,ind) => {
-    console.log("====chart====",chart)
-    const filteredChart = filterChart(chart);
-    return <CurrentPowerChart key={ind} {...filteredChart} />;
-  })}
-</div> */}
-
-            {/* // Then in your render: */}
             <div className="mt-6">
               {chartData.map((chart, ind) => {
                 // const filteredChart = filterChart(chart);
@@ -1292,56 +1314,7 @@ const Dashboard = () => {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AlertPanel />
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-0 gap-2 bg-white px-4 py-4 rounded-t-md">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-100 rounded-sm">
-                  <Zap className="text-orange-600" size={20} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Meters Overview
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {meters.length} meters
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="h-[400px] overflow-y-auto">
-              <MeterList meters={meters} />
-            </div>
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl shadow-sm border border-green-200 p-6 hover:shadow-md transition-shadow mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <Gauge className="text-green-600" size={24} />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-700 font-medium">
-                    ONLINE
-                  </span>
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Smart Meters
-              </h3>
-              <div className="flex items-baseline space-x-2 mb-3">
-                <span className="text-2xl font-bold text-green-600">
-                  {totalActive}
-                </span>
-                <span className="text-lg text-gray-500">/{total}</span>
-                <span className="text-sm text-green-600">({percentage}%)</span>
-              </div>
-              <div className="w-full bg-green-200 rounded-full h-3 mb-2">
-                <div
-                  className="bg-green-500 h-3 rounded-full transition-all duration-500"
-                  style={{ width: "83%" }}
-                ></div>
-              </div>
-              {/* <p className="text-sm text-gray-600">
-                5 meters scheduled for maintenance
-              </p> */}
-            </div>
+            <MeterList meters={meters} />
           </div>
         </div>
       </div>

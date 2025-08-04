@@ -394,9 +394,9 @@ const Chat = () => {
   ];
 
   return (
-    <div className="min-h-screen  p-bg-blue-200/10">
+    <div className="min-h-screen from-cyan-300 to-white">
     <Header/>
-      <div className="min-h-screen  p-4 rounded-lg shadow-md">
+      <div className="min-h-screen p-4 bg-white rounded-lg shadow-md">
         {/* Header */}
         {/* <div className="p-4 max-h-screen bg-cyan-600 text-white rounded-t-lg flex items-center">
           
@@ -423,14 +423,14 @@ const Chat = () => {
         </div>
 
         {/* Deduction List */}
-        <div className="p-4 space-y-4 bg-white rounded-lg shadow-md min-h-screen">
+        <div className="p-4 space-y-4">
           {activeTab === "recent" &&
             recentDeductions.map((item, index) => (
               <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md">
                 <div className="flex justify-between items-center">
                   <p className="text-gray-700 font-medium">{item.date}</p>
                   <button
-                    className="text-blue-500 font-medium cursor-pointer"
+                    className="text-blue-500 font-medium"
                     onClick={() => setTabIndex(tabIndex === index ? null : index)}
                   >
                     {tabIndex === index ? "Hide Details" : "View Details"}
